@@ -1,0 +1,1149 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Budget formation : ton parcours pas à pas</title>
+<meta name="description" content="Parcours interactif pour construire une application Budget formation avec Claude et Apps Script, tout en analysant les usages de l'IA en RH.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F8FAFC; --surface:#FFFFFF; --ink:#0F172A; --ink2:#475569; --ink3:#64748B;
+  --line:#E2E8F0; --line2:#CBD5E1;
+  --accent:#059669; --accent-ink:#065F46; --accent-soft:#ECFDF5; --accent-line:#A7F3D0;
+  --blue:#2563EB; --blue-soft:#EFF6FF;
+  --warn:#B45309; --warn-soft:#FFFBEB; --warn-line:#FDE68A;
+  --danger:#B91C1C; --danger-soft:#FEF2F2; --danger-line:#FECACA;
+  --glass:rgba(255,255,255,.72);
+  --radius:10px;
+  --font-body:"Source Sans 3","Segoe UI",system-ui,-apple-system,sans-serif;
+  --font-head:"Bricolage Grotesque","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--font-head);line-height:1.2;margin:0;color:var(--ink)}
+h1{font-size:1.7rem;font-weight:700;letter-spacing:-.01em}
+h2{font-size:1.35rem;font-weight:650}
+h3{font-size:1.1rem;font-weight:650}
+p{margin:0 0 .8em;max-width:68ch}
+a{color:var(--blue)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:6px}
+kbd{font-family:var(--mono);font-size:.72rem;background:var(--bg);border:1px solid var(--line2);border-bottom-width:2px;border-radius:5px;padding:0 5px;color:var(--ink2)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* barre d'actions flottante */
+.bar{position:sticky;top:10px;z-index:30;margin:10px 14px 0;padding:8px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:var(--glass);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);
+  border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.bar .actions{display:flex;gap:6px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line2);background:var(--surface);border-radius:8px;padding:7px 12px;font-weight:600;font-size:.92rem;cursor:pointer;line-height:1.2}
+.btn:hover{border-color:var(--ink3)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-ink);border-color:var(--accent-ink)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--ink2)}
+.btn.small{padding:4px 9px;font-size:.84rem}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.bar .brand{font-family:var(--font-head);font-weight:700;margin-left:auto;color:var(--ink2);font-size:.95rem}
+.status{font-size:.85rem;color:var(--ink3);display:flex;gap:12px;flex-wrap:wrap}
+.status b{color:var(--ink2);font-weight:600}
+.status .warn{color:var(--warn);font-weight:600}
+
+/* grille */
+.app{display:grid;grid-template-columns:250px minmax(0,1fr) 330px;gap:16px;padding:16px 14px 60px;align-items:start}
+@media (max-width:1180px){.app{grid-template-columns:minmax(0,1fr)}.rail{position:static!important}.dash{position:static!important}}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+.card+.card{margin-top:14px}
+
+/* rail */
+.rail{position:sticky;top:76px;max-height:calc(100vh - 92px);overflow:auto}
+.rail h2{font-size:.95rem;margin:0 0 10px;color:var(--ink2)}
+.chap{margin:0 0 12px}
+.chap-title{font-weight:700;font-size:.9rem;margin:0 0 4px;color:var(--ink)}
+.chap ol{list-style:none;margin:0;padding:0}
+.step-link{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;padding:5px 6px;border-radius:7px;cursor:pointer;font-size:.9rem;color:var(--ink2)}
+.step-link:hover{background:var(--bg)}
+.step-link[aria-current="step"]{background:var(--accent-soft);color:var(--accent-ink);font-weight:650}
+.step-link[disabled]{opacity:.45;cursor:not-allowed}
+.dot{flex:none;width:12px;height:12px;border-radius:50%;border:2px solid var(--line2);background:#fff}
+.dot.done{background:var(--accent);border-color:var(--accent)}
+.dot.new{border-color:var(--warn);background:var(--warn-soft)}
+
+/* stage */
+.stage .eyebrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.chip{display:inline-block;font-size:.8rem;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--bg);border:1px solid var(--line2);color:var(--ink2)}
+.chip.obj{background:var(--blue-soft);border-color:#BFDBFE;color:#1D4ED8}
+.chip.warn{background:var(--warn-soft);border-color:var(--warn-line);color:var(--warn)}
+.chip.ok{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent-ink)}
+.chip.bad{background:var(--danger-soft);border-color:var(--danger-line);color:var(--danger)}
+.lead{color:var(--ink2);font-size:1.02rem}
+.stage h1{margin-bottom:6px}
+.box{border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;background:var(--bg);margin:12px 0}
+.box.info{background:var(--blue-soft);border-color:#BFDBFE}
+.box.warn{background:var(--warn-soft);border-color:var(--warn-line)}
+.box.ok{background:var(--accent-soft);border-color:var(--accent-line)}
+.box.bad{background:var(--danger-soft);border-color:var(--danger-line)}
+.box h3{font-size:1rem;margin-bottom:4px}
+.box p:last-child{margin-bottom:0}
+
+/* missions */
+.todo{list-style:none;margin:14px 0;padding:0;display:grid;gap:12px}
+.todo>li{border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;background:var(--surface)}
+.todo>li.checked{background:var(--accent-soft);border-color:var(--accent-line)}
+.todo label{display:flex;gap:10px;align-items:flex-start;font-weight:650;cursor:pointer}
+.todo input[type=checkbox]{width:20px;height:20px;margin-top:3px;accent-color:var(--accent);flex:none}
+.todo .detail{margin:8px 0 0 30px;color:var(--ink2);font-size:.97rem}
+.todo .detail p{margin-bottom:.5em}
+.fig{margin:10px 0 4px 30px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:8px;max-width:680px}
+.fig svg{display:block;width:100%;height:auto}
+.fig img{display:none;width:100%;height:auto;border-radius:6px}
+.fig figcaption{font-size:.84rem;color:var(--ink3);padding:6px 4px 0}
+.fig figcaption ol{margin:4px 0 0;padding-left:18px}
+.fig .tag{font-size:.75rem;color:var(--ink3)}
+.copy{margin:8px 0 0 30px;border:1px solid var(--line2);border-radius:8px;background:var(--bg);overflow:hidden}
+.copy header{display:flex;justify-content:space-between;align-items:center;padding:5px 8px 5px 12px;border-bottom:1px solid var(--line);font-size:.82rem;color:var(--ink3);font-weight:600}
+.copy pre{margin:0;padding:10px 12px;white-space:pre-wrap;word-break:break-word;font-family:var(--mono);font-size:.84rem;line-height:1.5;color:var(--ink)}
+
+/* choix */
+.q{font-size:1.08rem;font-weight:650;margin:14px 0 8px;font-family:var(--font-head)}
+.opts{display:grid;gap:10px;margin:8px 0}
+.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;border:1.5px solid var(--line2);background:var(--surface);border-radius:var(--radius);padding:12px 14px;cursor:pointer}
+.opt:hover{border-color:var(--ink3)}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.opt .rad{flex:none;width:18px;height:18px;margin-top:3px;border-radius:50%;border:2px solid var(--line2);background:#fff}
+.opt[aria-pressed="true"] .rad{border-color:var(--accent);background:radial-gradient(var(--accent) 45%,#fff 50%)}
+.opt strong{display:block;font-weight:650}
+.opt span.d{display:block;color:var(--ink2);font-size:.95rem}
+.locked .opt{cursor:default}
+.locked .opt:not([aria-pressed="true"]){opacity:.55}
+.opts.row{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+
+.usage{border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin:12px 0;background:var(--surface)}
+.usage h3{margin-bottom:4px}
+.usage .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0;font-size:.93rem}
+.usage .two div{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+@media (max-width:640px){.usage .two{grid-template-columns:1fr}}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.seg button{border:1.5px solid var(--line2);background:#fff;border-radius:8px;padding:6px 11px;font-weight:600;font-size:.9rem;cursor:pointer}
+.seg button:hover{border-color:var(--ink3)}
+.seg button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink)}
+.locked .seg button{cursor:default}
+.locked .seg button:not([aria-pressed="true"]){opacity:.5}
+.verdict{margin-top:8px;font-size:.93rem;border-radius:8px;padding:8px 10px}
+.verdict.ok{background:var(--accent-soft);border:1px solid var(--accent-line)}
+.verdict.no{background:var(--warn-soft);border:1px solid var(--warn-line)}
+
+.explore{display:grid;gap:6px;margin:8px 0}
+.explore label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;font-size:.95rem}
+.explore input{width:18px;height:18px;margin-top:3px;accent-color:var(--accent);flex:none}
+.explore small{display:block;color:var(--ink3)}
+textarea,input[type=text]{width:100%;font:inherit;border:1.5px solid var(--line2);border-radius:8px;padding:9px 11px;background:#fff;color:var(--ink)}
+textarea{min-height:92px;resize:vertical}
+textarea:disabled,input[type=text]:disabled{background:var(--bg);color:var(--ink2)}
+.field{margin:10px 0}
+.field label{display:block;font-weight:650;margin-bottom:4px;font-size:.95rem}
+.count{font-size:.82rem;color:var(--ink3);margin-top:2px}
+.count.ok{color:var(--accent-ink)}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px;flex-wrap:wrap}
+
+.deltas{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.delta{font-size:.82rem;font-weight:700;padding:2px 8px;border-radius:99px;border:1px solid var(--line2);background:#fff}
+.delta.p{color:var(--accent-ink);border-color:var(--accent-line);background:var(--accent-soft)}
+.delta.n{color:var(--danger);border-color:var(--danger-line);background:var(--danger-soft)}
+.delta.z{color:var(--ink3)}
+
+/* feuille de route */
+.act{border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin:10px 0;background:#fff}
+.act.must{border-color:var(--warn-line);background:var(--warn-soft)}
+.act .cat{font-size:.78rem;font-weight:700;color:var(--ink3)}
+.act .t{font-weight:600;margin:2px 0 6px}
+.checks{list-style:none;padding:0;margin:8px 0;display:grid;gap:4px;font-size:.93rem}
+.checks li::before{content:"○ ";color:var(--ink3)}
+.checks li.ok::before{content:"✓ ";color:var(--accent);font-weight:700}
+
+/* tableau de bord */
+.dash{position:sticky;top:76px;max-height:calc(100vh - 92px);overflow:auto;background:var(--glass);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+.dash h2{font-size:1rem;margin-bottom:8px}
+.dash section+section{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.gauge{margin:8px 0}
+.gauge .lab{display:flex;justify-content:space-between;font-size:.88rem;font-weight:600}
+.gauge .lab span{font-family:var(--mono);font-weight:500;color:var(--ink2)}
+.track{height:9px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:3px}
+.fill{height:100%;background:var(--accent);border-radius:99px;transition:width .35s ease}
+.fill.mid{background:var(--warn)}
+.fill.low{background:var(--danger)}
+.path{overflow-x:auto;padding-bottom:4px}
+.path svg{display:block}
+.journal{list-style:none;margin:0;padding:0;font-size:.86rem;display:grid;gap:6px;max-height:210px;overflow:auto}
+.journal li{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff}
+.journal b{display:block;font-weight:650}
+.hint{font-size:.82rem;color:var(--ink3)}
+.banner{margin:12px 14px 0}
+
+/* impression : seule la vue rapport est imprimée */
+#print-root{display:none}
+@media print{
+  body{background:#fff;font-size:11.5pt}
+  .bar,.app,.banner,.toast{display:none!important}
+  #print-root{display:block;padding:0}
+  #print-root h1{font-size:20pt}
+  #print-root h2{font-size:14pt;margin:16pt 0 6pt;border-bottom:1px solid #999;padding-bottom:3pt;break-after:avoid}
+  #print-root h3{font-size:11.5pt;margin:8pt 0 2pt}
+  #print-root table{border-collapse:collapse;width:100%;margin:6pt 0}
+  #print-root th,#print-root td{border:1px solid #bbb;padding:3pt 5pt;text-align:left;vertical-align:top;font-size:10pt}
+  #print-root .blk{break-inside:avoid;margin:0 0 6pt}
+  #print-root pre{white-space:pre-wrap;font-family:var(--mono);font-size:9.5pt;border:1px solid #bbb;padding:5pt}
+  #print-root .bar-i{display:inline-block;height:7pt;background:#059669}
+  @page{margin:16mm}
+}
+
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:99px;font-size:.92rem;z-index:50;box-shadow:0 6px 24px rgba(15,23,42,.25)}
+dialog{border:1px solid var(--line2);border-radius:var(--radius);padding:20px;max-width:520px;width:calc(100% - 32px);background:#fff;color:var(--ink)}
+dialog::backdrop{background:rgba(15,23,42,.35);backdrop-filter:blur(3px)}
+dialog h2{margin-bottom:8px}
+dialog .nav{margin-top:14px}
+table.simple{border-collapse:collapse;width:100%;font-size:.93rem;margin:8px 0}
+table.simple th,table.simple td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+table.simple th{background:var(--bg)}
+details{border:1px solid var(--line);border-radius:var(--radius);padding:8px 12px;background:#fff;margin:10px 0}
+details summary{cursor:pointer;font-weight:650}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+@media print{#print-root .bar-i{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+</style>
+</head>
+<body>
+<a class="sr" href="#stage">Aller au contenu</a>
+<header class="bar" role="banner">
+  <div class="actions" role="toolbar" aria-label="Actions du projet">
+    <button class="btn" data-act="new" title="Nouveau projet">Nouveau <kbd data-pc="Alt N" data-mac="⌥ N">Alt N</kbd></button>
+    <button class="btn" data-act="open" title="Ouvrir un fichier de projet">Ouvrir <kbd data-pc="Alt O" data-mac="⌥ O">Alt O</kbd></button>
+    <button class="btn primary" data-act="exportJson" title="Enregistrer un fichier de projet (.json)">Enregistrer <kbd data-pc="Ctrl S" data-mac="⌘ S" style="color:#065F46">Ctrl S</kbd></button>
+    <button class="btn" data-act="exportPdf" title="Exporter le rapport en PDF">Exporter PDF <kbd data-pc="Ctrl E" data-mac="⌘ E">Ctrl E</kbd></button>
+  </div>
+  <div class="status" id="status" aria-live="polite"></div>
+  <div class="brand">Budget formation</div>
+</header>
+<div class="app">
+  <nav class="rail card" aria-label="Étapes du parcours"><h2>Ton parcours</h2><div id="rail-list"></div></nav>
+  <main class="stage" id="stage" tabindex="-1"></main>
+  <aside class="dash" id="dash" aria-label="Tableau de bord"></aside>
+</div>
+<div id="print-root"></div>
+<input type="file" id="file" accept=".json,application/json" hidden>
+<dialog id="dlg" aria-modal="true"></dialog>
+<script>
+/* ===== Outils ===== */
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const NB=' ',NNB=' ';
+const frText=t=>t.replace(/ ([:;?!»%€])/g,NB+'$1').replace(/« /g,'«'+NB).replace(/(\d) (?=\d{3}(?!\d))/g,'$1'+NNB);
+const fr=html=>html.replace(/^([^<]+)/,m=>frText(m)).replace(/>([^<]+)</g,(m,t)=>'>'+frText(t)+'<');
+const wc=s=>(String(s||'').trim().match(/\S+/g)||[]).length;
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const uid=()=>Math.random().toString(36).slice(2,10);
+const KEY='parcours-budget-formation-v1';
+const APPID='parcours-budget-formation';
+const VERSION=1;
+
+/* ===== État ===== */
+function fresh(){return {app:APPID,v:VERSION,id:uid(),meta:{created:Date.now(),updated:Date.now(),lastJson:0,lastPdf:0,changes:0},cur:'accueil',ans:{}};}
+let S=fresh();
+let storageOK=true;
+function load(){try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);if(o&&o.app===APPID&&o.ans)return o;}}catch(e){storageOK=false;}return null;}
+function persist(){S.meta.updated=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true;}catch(e){storageOK=false;}}
+const A=id=>S.ans[id]||(S.ans[id]={});
+
+/* ===== Étapes ===== */
+const have=(f,k)=>f.has(k);
+const STEPS=[
+ {id:'accueil',kind:'accueil',chap:'c0',t:'Bienvenue'},
+ {id:'m1',kind:'mission',chap:'c1',t:'Régler Claude'},
+ {id:'m2',kind:'mission',chap:'c1',t:'Créer le projet dédié'},
+ {id:'m3',kind:'mission',chap:'c1',t:'Créer la feuille et le script'},
+ {id:'d1',kind:'perimetre',chap:'c2',t:'Choisir ton périmètre RH'},
+ {id:'d2',kind:'usages',mode:'adopt',chap:'c3',obj:1,t:'Ce que l’IA change'},
+ {id:'d3',kind:'usages',mode:'human',chap:'c3',obj:2,t:'Qui décide : l’IA ou l’humain',show:f=>f.has('hasret')},
+ {id:'d4',kind:'usages',mode:'qualif',chap:'c3',obj:3,t:'Qualifier chaque usage'},
+ {id:'sc_interdit',kind:'scene',chap:'c4',scene:'sc_interdit',show:f=>SCENES[0].cond(f)},
+ {id:'d5',kind:'garde',chap:'c4',obj:4,t:'Données, biais, transparence, CSE'},
+ {id:'sc_donnees',kind:'scene',chap:'c4',scene:'sc_donnees',show:f=>SCENES[1].cond(f)},
+ {id:'sc_cse',kind:'scene',chap:'c4',scene:'sc_cse',show:f=>SCENES[2].cond(f)},
+ {id:'sc_biais',kind:'scene',chap:'c4',scene:'sc_biais',show:f=>SCENES[3].cond(f)},
+ {id:'sc_transp',kind:'scene',chap:'c4',scene:'sc_transp',show:f=>SCENES[4].cond(f)},
+ {id:'m4',kind:'mission',chap:'c5',t:'Construire « Budget formation »'},
+ {id:'d6',kind:'roadmap',chap:'c6',obj:5,t:'Construire ta feuille de route'},
+ {id:'d7',kind:'synthese',chap:'c7',obj:6,t:'Diagnostic et défense'}
+];
+const stepById=id=>STEPS.find(s=>s.id===id);
+const sceneOf=st=>SCENES.find(x=>x.id===st.scene);
+const titleOf=st=>st.scene?sceneOf(st).t:st.t;
+const perimetreId=()=>(S.ans.d1&&S.ans.d1.done)?S.ans.d1.choice:null;
+const usagesList=()=>USAGES[perimetreId()]||[];
+const usageById=id=>usagesList().find(u=>u.id===id);
+
+/* ===== Calcul de l'état dérivé ===== */
+function stepFlags(st,a,f){
+  if(st.kind==='perimetre'){f.add('perimetre:'+a.choice);}
+  else if(st.kind==='scene'){const o=sceneOf(st).opts.find(x=>x.id===a.choice);if(o)(o.flags||[]).forEach(x=>f.add(x));}
+  else if(st.kind==='garde'){GARDE.forEach(g=>{const o=g.opts.find(x=>x.id===(a.pick||{})[g.id]);if(o)o.flags.forEach(x=>f.add(x));});}
+  else if(st.kind==='usages'){
+    const ul=usagesList(),p=a.pick||{};
+    if(st.mode==='adopt'){ul.forEach(u=>{const c=p[u.id];if(c==='adopt'||c==='pilote'){f.add('hasret');f.add('ret:'+u.id);if(u.ref==='interdit')f.add('interdit_retenu');if(u.ref==='haut')f.add('haut_retenu');if(c==='pilote')f.add('pilote_present');}});}
+    if(st.mode==='human'){ul.forEach(u=>{const m=p[u.id];if(m){f.add('mode:'+m);if(m==='seule'&&(u.ref==='haut'||u.ref==='interdit'))f.add('seule_haut');}});}
+    if(st.mode==='qualif'){ul.forEach(u=>{if(p[u.id]&&p[u.id]!==u.ref)f.add('qualif_err:'+u.id);});}
+  }
+}
+function addFx(t,f){for(const k in f)t[k]=(t[k]||0)+f[k];return t;}
+function retained(u){const a=S.ans.d2;return a&&a.done&&(a.pick[u.id]==='adopt'||a.pick[u.id]==='pilote');}
+function stepFx(st,a,flags){
+  const t={valeur:0,legal:0,conf:0,qvct:0,sob:0};
+  if(st.kind==='perimetre')return t;
+  if(st.kind==='scene'){const o=sceneOf(st).opts.find(x=>x.id===a.choice);return o?addFx(t,o.fx):t;}
+  if(st.kind==='garde'){GARDE.forEach(g=>{const o=g.opts.find(x=>x.id===(a.pick||{})[g.id]);if(o)addFx(t,o.fx);});return t;}
+  if(st.kind==='usages'){
+    const ul=usagesList(),p=a.pick||{};
+    ul.forEach(u=>{
+      if(st.mode==='adopt'&&p[u.id])addFx(t,u.fx[p[u.id]]);
+      if(st.mode==='human'&&p[u.id]&&retained(u))addFx(t,HUMAN_FX[p[u.id]][u.ref]);
+      if(st.mode==='qualif'&&p[u.id])addFx(t,fx(0,p[u.id]===u.ref?3:-3,0,0,0));
+    });return t;}
+  if(st.kind==='roadmap'){ACTIONS.forEach(ac=>{const h=(a.pick||{})[ac.id];if(h&&HFACTOR[h])addFx(t,{valeur:ac.fx.valeur*HFACTOR[h],legal:ac.fx.legal*HFACTOR[h],conf:ac.fx.conf*HFACTOR[h],qvct:ac.fx.qvct*HFACTOR[h],sob:ac.fx.sob*HFACTOR[h]});});return t;}
+  return t;
+}
+function derive(){
+  const flags=new Set();
+  STEPS.forEach(st=>{const a=S.ans[st.id];if(a&&a.done)stepFlags(st,a,flags);});
+  const tot={valeur:0,legal:0,conf:0,qvct:0,sob:0},per={};
+  STEPS.forEach(st=>{const a=S.ans[st.id];if(a&&a.done){const f=stepFx(st,a,flags);per[st.id]=f;addFx(tot,f);}});
+  const ind={};IND.forEach(i=>ind[i.k]=clamp(Math.round(50+(tot[i.k]||0)),0,100));
+  const visible=STEPS.filter(s=>!s.show||s.show(flags));
+  return {flags,tot,per,ind,visible};
+}
+function isDone(st){const a=S.ans[st.id];return !!(a&&a.done);}
+function openableIndex(vis){const i=vis.findIndex(s=>!isDone(s));return i<0?vis.length-1:i;}
+
+/* ===== Règles de gestion issues des décisions ===== */
+function rulesFromPath(f){
+  const r=['Utilise uniquement des données fictives : aucun nom, salaire ou évaluation réels.','L’application ne note pas et ne classe pas les personnes. Elle calcule des montants et applique des règles de budget.'];
+  if(f.has('mode:seule')||f.has('seule_haut'))r.push('Tu as accepté des décisions automatiques. Dans Budget formation, limite-les au calcul du budget restant, affiche toujours le motif et ajoute un bouton « Demander un réexamen par une personne ».');
+  else r.push('Une personne valide ou refuse chaque demande. L’application propose et calcule, elle ne décide pas seule.');
+  r.push('Affiche un encadré qui explique à quoi sert l’outil, quelles données il utilise et comment demander une intervention humaine.');
+  r.push('Tiens un journal des décisions : date, personne qui décide, motif. Les représentants du personnel doivent pouvoir le consulter.');
+  if(f.has('data:pseudo'))r.push('Ajoute une durée de conservation par demande et remplace les noms par des identifiants.');
+  r.push('N’appelle aucun service externe d’IA : de simples formules suffisent. Garde seulement les colonnes nécessaires.');
+  return r;
+}
+
+/* ===== Contenu pédagogique ===== */
+const fx=(valeur=0,legal=0,conf=0,qvct=0,sob=0)=>({valeur,legal,conf,qvct,sob});
+const IND=[
+ {k:'valeur',t:'Gain attendu',d:'Gain annoncé par les fournisseurs, avant prise en compte des risques. Un gain élevé avec une conformité faible n’est pas un bon signe.'},
+ {k:'legal',t:'Conformité',d:'Respect du cadre légal (AI Act, RGPD, droit du travail).'},
+ {k:'conf',t:'Confiance des salariés',d:'Dialogue social, transparence, équité perçue.'},
+ {k:'qvct',t:'Qualité de vie et conditions de travail',d:'Charge, autonomie, sens du travail.'},
+ {k:'sob',t:'Sobriété numérique',d:'Usage mesuré des outils, des données et des calculs.'}
+];
+const CHAPS=[
+ {id:'c0',t:'Démarrer'},{id:'c1',t:'Préparer les outils'},{id:'c2',t:'Choisir un périmètre RH'},{id:'c3',t:'Mesurer l’apport de l’IA'},
+ {id:'c4',t:'Poser les garde-fous'},{id:'c5',t:'Construire l’application'},{id:'c6',t:'Feuille de route'},{id:'c7',t:'Diagnostic'}
+];
+const OBJ={
+ 1:'Objectif 1 : analyser les effets de l’IA sur le recrutement, la formation, la performance et l’administration RH',
+ 2:'Objectif 2 : situer ce que l’IA apporte et ce qui reste une décision humaine',
+ 3:'Objectif 3 : qualifier un usage de l’IA en RH (interdit, haut risque, risque limité)',
+ 4:'Objectif 4 : identifier les biais, la transparence, la confidentialité et le rôle du CSE',
+ 5:'Objectif 5 : construire une feuille de route qui tient compte de la RSE',
+ 6:'Objectif 6 : présenter et défendre un diagnostic d’opportunités et de risques'
+};
+const SRC={
+ aiact:{t:'AI Act : règlement (UE) 2024/1689, texte officiel',u:'https://eur-lex.europa.eu/eli/reg/2024/1689/oj/fra',w:'Lis l’article 5 (pratiques interdites), l’article 50 (transparence) et l’annexe III, point 4 (emploi).'},
+ omnibus:{t:'Règlement (UE) 2026/1744 : nouveau calendrier de l’AI Act',u:'https://eur-lex.europa.eu/',w:'Cherche ce numéro sur EUR-Lex. Vérifie la date d’application des obligations « haut risque » de l’annexe III.'},
+ rgpd:{t:'RGPD : synthèse par la CNIL',u:'https://www.cnil.fr/fr/reglement-europeen-protection-donnees',w:'Repère les articles 5 (principes), 13 et 15 (information, accès), 22 (décision automatisée), 33 (violation de données), 35 (analyse d’impact).'},
+ cnilia:{t:'CNIL : dossier Intelligence artificielle',u:'https://www.cnil.fr/fr/intelligence-artificielle',w:'Cherche les recommandations sur l’IA et les données personnelles.'},
+ travail:{t:'Légifrance : Code du travail',u:'https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006072050/',w:'Cherche les articles L. 1222-4 (information du salarié), L. 2312-8 et L. 2312-38 (consultation du CSE).'},
+ anact:{t:'Anact : conditions de travail et numérique',u:'https://www.anact.fr/',w:'Cherche les ressources sur la qualité de vie et des conditions de travail (QVCT) et l’introduction de nouveaux outils.'},
+ ademe:{t:'ADEME : impact environnemental du numérique',u:'https://www.ademe.fr/',w:'Cherche les ordres de grandeur sur l’empreinte des usages numériques.'},
+ ddd:{t:'Défenseur des droits : discriminations et algorithmes',u:'https://www.defenseurdesdroits.fr/',w:'Cherche les rapports sur les biais et les discriminations liés aux systèmes automatisés.'}
+};
+const SRC_NOTE='Ces adresses mènent à des sites officiels. Si une page a changé, cherche son titre. Mes synthèses sont à vérifier sur les textes eux-mêmes.';
+
+const PERIMETRES=[
+ {id:'recrutement',t:'Recrutement',d:'Trouver, trier et sélectionner des candidats.',enjeu:'Beaucoup de candidatures, des décisions qui engagent des personnes, et un cadre légal exigeant.'},
+ {id:'formation',t:'Formation',d:'Identifier les besoins, orienter et financer les parcours.',enjeu:'L’IA personnalise bien, mais un score de potentiel peut décider de la carrière sans qu’on le voie.'},
+ {id:'performance',t:'Gestion des performances',d:'Évaluer, accompagner, rémunérer, promouvoir.',enjeu:'Le suivi permanent attire les outils, et touche à la vie privée et au climat social.'},
+ {id:'admin',t:'Administration RH',d:'Contrats, paie, plannings, questions des salariés.',enjeu:'Gains de temps très concrets, avec quelques outils qui trient les personnes sans le dire.'}
+];
+
+/* ===== Usages candidats par périmètre ===== */
+const REFS={interdit:'Interdit',haut:'Haut risque',limite:'Risque limité',minimal:'Risque minimal'};
+const USAGES={
+ recrutement:[
+  {id:'r1',t:'Tri et classement automatique des CV',s:'L’outil lit 800 candidatures et propose un classement du meilleur au moins bon.',gain:'Traite un grand volume en quelques minutes.',humain:'Choisir qui est reçu, et pouvoir l’expliquer.',ref:'haut',why:'Annexe III, point 4 : recrutement et sélection des candidats. Les obligations de fond s’appliquent à partir du 2 décembre 2027, mais les règles du RGPD s’appliquent déjà.',fx:{adopt:fx(15,-8,-6,0,-4),pilote:fx(7,-3,-2,0,-2),refuse:fx(-3,3,3,0,3)}},
+  {id:'r2',t:'Analyse des émotions du candidat en entretien vidéo',s:'Le logiciel lit le visage et la voix pour mesurer la motivation.',gain:'Promet un indicateur de motivation.',humain:'Écouter et évaluer le candidat sur ses réponses.',ref:'interdit',why:'Article 5, paragraphe 1, point f : déduire les émotions d’une personne au travail à partir de ses données biométriques (visage, voix) est interdit depuis le 2 février 2025, sauf motif médical ou de sécurité. À vérifier : les lignes directrices de la Commission rattachent la sélection des candidats au lieu de travail.',fx:{adopt:fx(5,-30,-14,-2,-5),pilote:fx(2,-22,-8,-1,-3),refuse:fx(-1,5,4,1,2)}},
+  {id:'r3',t:'Assistant conversationnel pour répondre aux candidats',s:'Un agent répond jour et nuit aux questions sur les offres et le calendrier.',gain:'Réponse immédiate, moins de relances.',humain:'Traiter les cas particuliers et les réclamations.',ref:'limite',why:'Article 50 : la personne doit savoir qu’elle parle à une IA. L’agent ne décide rien sur les candidats.',fx:{adopt:fx(8,-1,1,1,-3),pilote:fx(4,0,1,0,-1),refuse:fx(-2,0,0,0,1)}},
+  {id:'r4',t:'Aide à la rédaction des offres d’emploi',s:'Un assistant propose un texte que le recruteur relit et corrige.',gain:'Textes plus clairs, rédigés plus vite.',humain:'Relire, corriger les formulations discriminantes, publier.',ref:'minimal',why:'Aucune décision sur une personne : risque minimal. Garde une relecture humaine contre les biais de rédaction.',fx:{adopt:fx(5,0,0,1,-1),pilote:fx(3,0,0,0,0),refuse:fx(-1,0,0,0,0)}}
+ ],
+ formation:[
+  {id:'f1',t:'Recommandation de parcours de formation',s:'Chaque salarié reçoit des suggestions. Il choisit librement.',gain:'Parcours plus pertinents, découverte de formations.',humain:'Décider de suivre ou non, et d’en parler à son manager.',ref:'minimal',nuance:'Cela bascule en haut risque si le résultat pèse sur une promotion ou une évaluation.',why:'Une suggestion libre sans effet sur la carrière relève du risque minimal. Si le résultat pèse sur la promotion ou l’évaluation, relis l’annexe III, point 4.',fx:{adopt:fx(10,-1,2,3,-3),pilote:fx(5,0,1,1,-1),refuse:fx(-2,0,0,0,1)}},
+  {id:'f2',t:'Arbitrage automatique des demandes selon un score de potentiel',s:'Un algorithme note chaque salarié et accorde ou refuse les formations.',gain:'Budget réparti vite, selon un critère unique.',humain:'Juger la situation de la personne et motiver un refus.',ref:'haut',why:'Un score de potentiel qui conditionne la carrière touche aux conditions de la relation de travail (annexe III, point 4). Le RGPD, article 22, limite aussi les décisions fondées uniquement sur un traitement automatisé. À débattre : la formation n’est pas citée telle quelle dans l’annexe.',fx:{adopt:fx(12,-10,-12,-5,-3),pilote:fx(5,-4,-5,-2,-1),refuse:fx(-2,3,3,1,1)}},
+  {id:'f3',t:'Tuteur conversationnel pour réviser pendant la formation',s:'Un assistant répond aux questions des apprenants entre deux séances.',gain:'Aide disponible en continu, rythme personnalisé.',humain:'Concevoir la formation et évaluer les acquis.',ref:'limite',why:'Article 50 : informer qu’il s’agit d’une IA. L’article 4 demande aussi de développer la maîtrise de l’IA des équipes.',fx:{adopt:fx(8,-1,0,3,-4),pilote:fx(4,0,0,1,-2),refuse:fx(-2,0,0,0,1)}},
+  {id:'f4',t:'Caméra qui mesure l’attention et l’humeur pendant le e-learning',s:'Un module filme les visages et affiche un indice d’attention.',gain:'Promet un suivi de l’engagement.',humain:'Observer les apprenants et adapter le rythme.',ref:'interdit',why:'Article 5, paragraphe 1, point f : déduire les émotions à partir du visage au travail est interdit depuis le 2 février 2025, sauf motif médical ou de sécurité.',fx:{adopt:fx(4,-30,-15,-6,-5),pilote:fx(2,-22,-9,-3,-3),refuse:fx(-1,5,4,2,2)}}
+ ],
+ performance:[
+  {id:'p1',t:'Score de performance calculé à partir des e-mails, agendas et connexions',s:'Un outil note chaque salarié selon son activité numérique.',gain:'Une mesure continue, sans saisie.',humain:'Évaluer le travail réel, dialoguer, décider.',ref:'haut',why:'Annexe III, point 4 : suivi et évaluation des performances. S’ajoutent le Code du travail (L. 1222-4 : le salarié est informé des dispositifs de collecte) et la consultation du CSE (L. 2312-38).',fx:{adopt:fx(10,-10,-15,-8,-4),pilote:fx(4,-5,-7,-4,-2),refuse:fx(-2,3,4,2,2)}},
+  {id:'p2',t:'Analyse du ton et des émotions des conseillers pendant les appels',s:'Le logiciel mesure la voix pour repérer stress et colère.',gain:'Promet un repérage précoce du stress.',humain:'Écouter les équipes et traiter les causes du stress.',ref:'interdit',why:'Article 5, paragraphe 1, point f : l’analyse de la voix pour déduire les émotions au travail est interdite depuis le 2 février 2025 (exceptions : motif médical ou de sécurité).',fx:{adopt:fx(4,-30,-16,-8,-5),pilote:fx(2,-22,-9,-4,-3),refuse:fx(-1,5,4,2,2)}},
+  {id:'p3',t:'Assistant de préparation de l’entretien annuel',s:'L’outil propose des trames. Le manager rédige et signe.',gain:'Entretiens mieux préparés, moins de rédaction.',humain:'Évaluer, rédiger l’avis, signer, échanger avec le salarié.',ref:'minimal',why:'Il ne décide rien et le manager reste auteur : risque minimal. Les données du salarié ne partent pas dans un outil grand public.',fx:{adopt:fx(8,0,1,1,-2),pilote:fx(4,0,1,0,-1),refuse:fx(-1,0,0,0,1)}},
+  {id:'p4',t:'Indicateurs d’équipe anonymisés, sans classement individuel',s:'Un tableau de bord agrège la charge et les délais par équipe.',gain:'Repérer les surcharges sans noter les personnes.',humain:'Interpréter les chiffres avec l’équipe.',ref:'minimal',why:'Aucune évaluation individuelle. Garde un seuil minimal de personnes par groupe pour éviter de les identifier.',fx:{adopt:fx(7,-1,1,2,-1),pilote:fx(4,0,1,1,0),refuse:fx(-1,0,0,0,0)}}
+ ],
+ admin:[
+  {id:'a1',t:'Assistant RH pour répondre aux questions des salariés',s:'Un agent répond sur les congés, la paie et les démarches.',gain:'Réponses immédiates, charge des gestionnaires réduite.',humain:'Traiter les situations sensibles et les litiges.',ref:'limite',why:'Article 50 : informer qu’il s’agit d’une IA. Ne mets pas de données de paie dans un outil grand public.',fx:{adopt:fx(9,-1,2,2,-3),pilote:fx(5,0,1,1,-1),refuse:fx(-2,0,0,0,1)}},
+  {id:'a2',t:'Rédaction de courriers et de contrats à partir de modèles',s:'L’outil assemble un document. Un gestionnaire le valide.',gain:'Gain de temps, moins d’erreurs de saisie.',humain:'Valider le contenu et signer.',ref:'minimal',why:'Aucune décision sur une personne et validation humaine : risque minimal.',fx:{adopt:fx(7,0,0,1,-1),pilote:fx(4,0,0,0,0),refuse:fx(-1,0,0,0,0)}},
+  {id:'a3',t:'Planning automatique selon le comportement et les traits de chaque salarié',s:'L’outil attribue les tâches et les horaires selon des profils.',gain:'Plannings produits en quelques minutes.',humain:'Équilibrer la charge et tenir compte des contraintes de chacun.',ref:'haut',why:'Annexe III, point 4 : répartition des tâches fondée sur le comportement ou les traits personnels.',fx:{adopt:fx(11,-9,-10,-6,-3),pilote:fx(5,-4,-4,-3,-1),refuse:fx(-2,3,3,2,1)}},
+  {id:'a4',t:'Caméras à l’entrée qui mesurent l’humeur des salariés',s:'Un indicateur de bien-être en temps réel s’affiche pour la direction.',gain:'Promet un baromètre immédiat de l’humeur.',humain:'Interroger les salariés et écouter leurs retours.',ref:'interdit',why:'Article 5, paragraphe 1, point f : déduire les émotions à partir du visage au travail est interdit depuis le 2 février 2025, sauf motif médical ou de sécurité.',fx:{adopt:fx(4,-30,-14,-6,-4),pilote:fx(2,-22,-8,-3,-2),refuse:fx(-1,5,4,2,2)}}
+ ]
+};
+const USAGE_CHOICES=[{id:'adopt',t:'Adopter'},{id:'pilote',t:'Tester en pilote'},{id:'refuse',t:'Refuser'}];
+const HUMAN_MODES=[
+ {id:'propose',t:'L’IA propose, l’humain décide',d:'Une personne examine chaque résultat et peut le changer.'},
+ {id:'controle',t:'L’IA décide, l’humain contrôle après coup',d:'Le contrôle porte sur un échantillon ou sur les réclamations.'},
+ {id:'seule',t:'L’IA décide seule',d:'Aucune personne ne regarde le résultat avant qu’il s’applique.'}
+];
+/* effets selon le niveau de risque de l'usage et le mode de décision */
+const HUMAN_FX={
+ propose:{interdit:fx(0,2,2,0,0),haut:fx(-1,5,4,1,0),limite:fx(0,1,2,1,0),minimal:fx(0,0,1,1,0)},
+ controle:{interdit:fx(1,-3,-3,0,0),haut:fx(3,-7,-4,-1,0),limite:fx(2,0,0,0,0),minimal:fx(2,0,0,0,0)},
+ seule:{interdit:fx(2,-8,-8,-2,0),haut:fx(6,-16,-12,-3,0),limite:fx(4,-4,-3,-1,0),minimal:fx(3,-1,-1,0,0)}
+};
+const QUALIF_LEVELS=[{id:'interdit',t:'Interdit'},{id:'haut',t:'Haut risque'},{id:'limite',t:'Risque limité'},{id:'minimal',t:'Risque minimal'}];
+
+/* ===== Garde-fous (objectif 4) ===== */
+const GARDE=[
+ {id:'g_data',q:'Quelles données alimentent l’outil ?',opts:[
+  {id:'fictives',t:'Données fictives ou anonymisées',d:'Aucun nom ni identifiant réel pendant les essais.',fx:fx(-1,6,3,0,1),flags:['data:fictives'],csq:'Tu limites les risques, mais les essais seront moins réalistes.'},
+  {id:'pseudo',t:'Données pseudonymisées, accès restreint',d:'Identifiants remplacés, accès limité à quelques personnes, durée de conservation fixée.',fx:fx(3,1,0,0,0),flags:['data:pseudo'],csq:'Une pseudonymisation reste une donnée personnelle : le RGPD s’applique. Prévois une analyse d’impact si le risque est élevé.'},
+  {id:'reelles',t:'Données réelles complètes dans un outil grand public',d:'Noms, évaluations et salaires collés dans un assistant en ligne.',fx:fx(5,-18,-8,0,-2),flags:['data:reelles'],csq:'Tu exposes des données de salariés à un tiers sans base légale claire. Un incident devient probable.'}]},
+ {id:'g_biais',q:'Comment cherches-tu les biais ?',opts:[
+  {id:'audit',t:'Audit avant et pendant l’usage',d:'Comparaison des résultats par genre, âge, origine supposée, avec un échantillon test.',fx:fx(-2,6,6,1,-1),flags:['biais:audit'],csq:'Tu trouves les écarts avant qu’ils produisent des effets. Cela demande du temps et des données de comparaison.'},
+  {id:'ponctuel',t:'Contrôle humain ponctuel',d:'Un manager relit quelques résultats de temps en temps.',fx:fx(1,1,0,0,0),flags:['biais:ponctuel'],csq:'Un contrôle ponctuel ne mesure pas un écart systématique.'},
+  {id:'aucun',t:'Aucune vérification : l’éditeur dit que l’outil est neutre',d:'Tu fais confiance à la documentation commerciale.',fx:fx(2,-8,-6,-1,0),flags:['biais:aucun'],csq:'Une promesse commerciale ne remplace pas une vérification. Tu portes la responsabilité de l’usage.'}]},
+ {id:'g_transp',q:'Que dis-tu aux personnes concernées ?',opts:[
+  {id:'amont',t:'Information claire en amont',d:'Finalité, rôle de l’IA, données utilisées, droit de demander une intervention humaine.',fx:fx(0,6,7,1,0),flags:['transp:amont'],csq:'Tu respectes l’obligation d’information et tu crées de la confiance.'},
+  {id:'interne',t:'Une mention dans une politique interne',d:'Un paragraphe dans un document que personne ne lit.',fx:fx(0,1,-1,0,0),flags:['transp:interne'],csq:'L’information doit être compréhensible et accessible. Une mention noyée ne suffit pas.'},
+  {id:'rien',t:'Rien, tant que personne ne demande',d:'Tu attends une question ou une plainte.',fx:fx(1,-8,-8,-1,0),flags:['transp:rien'],csq:'Les personnes ont des droits d’information et d’accès. Se taire expose à une demande, puis à un contentieux.'}]},
+ {id:'g_cse',q:'Quand associes-tu le CSE ?',opts:[
+  {id:'avant',t:'Avant le déploiement, avec un dossier écrit',d:'Information et consultation sur l’outil, ses données et ses effets sur le travail.',fx:fx(-2,7,8,2,0),flags:['cse:avant'],csq:'Tu respectes la logique des articles L. 2312-8 et L. 2312-38, et tu bénéficies de l’avis des représentants. Le calendrier s’allonge.'},
+  {id:'apres',t:'Après la phase pilote',d:'Tu présentes les résultats une fois l’outil en service.',fx:fx(2,-5,-5,-1,0),flags:['cse:apres'],csq:'La consultation doit précéder la décision. Tu risques une demande de suspension.'},
+  {id:'non',t:'Seulement si un salarié se plaint',d:'Tu ne le sollicites pas.',fx:fx(3,-10,-10,-2,0),flags:['cse:non'],csq:'Tu prends un risque juridique et social élevé : l’absence de consultation peut faire suspendre l’outil.'}]}
+];
+
+/* ===== Scènes conditionnelles ===== */
+const SCENES=[
+ {id:'sc_interdit',cond:f=>f.has('interdit_retenu'),obj:3,t:'Alerte : une pratique interdite est en service',
+  intro:'Un représentant du personnel alerte l’inspection du travail. L’outil que tu as retenu déduit des émotions de salariés ou de candidats à partir de données biométriques. Cette pratique est interdite depuis le 2 février 2025. Les sanctions peuvent atteindre 35 millions d’euros ou 7 % du chiffre d’affaires mondial.',
+  q:'Que décides-tu ?',opts:[
+   {id:'stop',t:'Suspendre l’outil aujourd’hui et documenter',d:'Arrêt immédiat, information de la direction et du délégué à la protection des données, trace écrite.',fx:fx(-4,12,6,2,2),flags:['remediation'],csq:'Tu fais cesser l’infraction. La confiance se reconstruit si tu expliques la décision.'},
+   {id:'reduire',t:'Réduire le périmètre et garder l’outil',d:'Tu l’arrêtes sur certains services seulement.',fx:fx(1,-4,-5,-1,0),flags:['interdit_reste'],csq:'Une pratique interdite l’est partout. Réduire le périmètre ne change pas la qualification.'},
+   {id:'continuer',t:'Continuer en attendant d’y voir plus clair',d:'Tu estimes que le texte laisse des zones d’ombre.',fx:fx(2,-18,-12,-2,0),flags:['interdit_reste','sanction'],csq:'Tu choisis de poursuivre une pratique que le texte interdit. Le risque de sanction est direct.'}]},
+ {id:'sc_donnees',cond:f=>f.has('data:reelles'),obj:4,t:'Incident : des données de salariés ont quitté l’entreprise',
+  intro:'Un collaborateur signale que les évaluations de 40 salariés ont été collées dans un assistant en ligne grand public. Tu ne sais pas où elles sont conservées.',
+  q:'Comment réagis-tu ?',opts:[
+   {id:'notifier',t:'Prévenir le délégué à la protection des données et évaluer la notification',d:'Le RGPD (article 33) prévoit une notification à la CNIL dans les 72 heures si un risque est établi. Tu documentes l’incident.',fx:fx(0,8,4,0,0),flags:['incident_traite'],csq:'Tu agis dans le délai et tu gardes une trace. Tu informes aussi les personnes si le risque est élevé (article 34).'},
+   {id:'discret',t:'Corriger discrètement',d:'Tu demandes la suppression sans prévenir personne.',fx:fx(0,-12,-8,0,0),flags:['incident_cache'],csq:'Un incident de sécurité se documente, même s’il n’est pas notifié. Le silence aggrave la situation.'},
+   {id:'attendre',t:'Attendre de voir si cela se reproduit',d:'Tu estimes que le risque est faible.',fx:fx(0,-8,-4,0,0),flags:['incident_cache'],csq:'Tu perds les premières heures, qui comptent pour le délai de 72 heures.'}]},
+ {id:'sc_cse',cond:f=>f.has('cse:apres')||f.has('cse:non'),obj:4,t:'Le CSE demande la suspension du projet',
+  intro:'Le comité social et économique s’estime court-circuité. Il demande la suspension de l’outil jusqu’à l’information-consultation prévue par le Code du travail (articles L. 2312-8 et L. 2312-38, à vérifier sur Légifrance).',
+  q:'Quelle est ta réponse ?',opts:[
+   {id:'ouvrir',t:'Ouvrir la consultation maintenant et suspendre le temps de l’avis',d:'Dossier écrit, délai d’examen suffisant, possibilité d’une expertise.',fx:fx(-3,5,8,1,0),flags:['cse_rattrape'],csq:'Tu rattrapes l’étape manquée. Le calendrier recule, mais la relation se répare.'},
+   {id:'contester',t:'Soutenir que l’outil n’est pas concerné',d:'Tu fais valoir qu’il s’agit d’un simple assistant.',fx:fx(0,-6,-10,-1,0),flags:['cse_conflit'],csq:'Si l’outil influence l’organisation du travail ou la gestion du personnel, l’argument est fragile. Tu ouvres un conflit.'},
+   {id:'continuer',t:'Continuer le déploiement',d:'Tu maintiens le calendrier.',fx:fx(1,-10,-12,-2,0),flags:['cse_conflit','sanction'],csq:'Tu t’exposes à une suspension judiciaire et à une rupture du dialogue social.'}]},
+ {id:'sc_biais',cond:f=>f.has('biais:aucun'),obj:4,t:'Un test révèle un écart de traitement',
+  intro:'Un stagiaire compare les résultats de l’outil. À profils équivalents, les candidatures et les demandes portant un prénom féminin reçoivent systématiquement des scores plus bas.',
+  q:'Que fais-tu ?',opts:[
+   {id:'audit',t:'Suspendre l’outil et lancer un audit indépendant',d:'Analyse des données et des critères, avis du délégué à la protection des données.',fx:fx(-4,8,6,1,-1),flags:['biais_traite'],csq:'Tu protèges les personnes concernées et tu documentes la correction.'},
+   {id:'seuil',t:'Corriger seulement les seuils',d:'Tu ajustes quelques paramètres sans comprendre la cause.',fx:fx(1,-3,-4,0,0),flags:['biais_reste'],csq:'Le biais vient souvent des données ou des critères. Un réglage cosmétique ne le supprime pas.'},
+   {id:'ignorer',t:'Ignorer : l’échantillon est trop petit',d:'Tu estimes que ce n’est pas représentatif.',fx:fx(1,-10,-9,-1,0),flags:['biais_reste','sanction'],csq:'Tu connais le risque et tu ne fais rien : en cas de litige, cela pèse lourd.'}]},
+ {id:'sc_transp',cond:f=>f.has('transp:rien'),obj:4,t:'Un salarié demande ce que l’outil sait de lui',
+  intro:'Un salarié exerce son droit d’accès aux données que l’outil a produites à son sujet. Tu n’avais prévu aucune information en amont.',
+  q:'Comment réponds-tu ?',opts:[
+   {id:'repondre',t:'Répondre dans le délai d’un mois, avec explication claire',d:'Données, finalité, rôle de l’IA, possibilité de demander un réexamen humain.',fx:fx(0,5,5,1,0),flags:['acces_traite'],csq:'Tu répares l’oubli. Tu en tires une procédure pour tous les salariés.'},
+   {id:'retarder',t:'Retarder la réponse',d:'Tu cherches d’abord où se trouvent les données.',fx:fx(0,-6,-5,0,0),flags:['acces_conflit'],csq:'Le délai légal est d’un mois en principe. Chaque retard nourrit la défiance.'},
+   {id:'refuser',t:'Refuser, au motif d’un secret commercial',d:'Tu invoques la confidentialité de l’outil.',fx:fx(0,-10,-9,0,0),flags:['acces_conflit','sanction'],csq:'Un secret commercial ne suffit pas à écarter les droits de la personne concernée.'}]}
+];
+
+/* ===== Feuille de route ===== */
+const HORIZONS=[{id:'t1',t:'0 à 3 mois'},{id:'t2',t:'3 à 12 mois'},{id:'t3',t:'Au-delà de 12 mois'},{id:'no',t:'Non retenue'}];
+const HFACTOR={t1:1,t2:.8,t3:.5,no:0};
+const ACTIONS=[
+ {id:'ac_cartographie',cat:'Cadre légal',t:'Cartographier les usages d’IA et leur niveau de risque',fx:fx(0,6,1,0,0)},
+ {id:'ac_maitrise',cat:'Compétences',t:'Former les équipes RH à la maîtrise de l’IA (article 4, déjà applicable)',fx:fx(1,5,3,2,0)},
+ {id:'ac_retrait',cat:'Cadre légal',t:'Retirer toute pratique interdite et garder la trace de la décision',fx:fx(0,10,4,2,1),cond:f=>f.has('interdit_retenu'),must:'t1',why:'Une pratique interdite doit cesser sans délai.'},
+ {id:'ac_haut',cat:'Cadre légal',t:'Préparer la conformité « haut risque » avant le 2 décembre 2027 : gestion des risques, documentation, supervision humaine',fx:fx(0,9,2,0,0),cond:f=>f.has('haut_retenu'),must:'t2',why:'Les obligations de l’annexe III s’appliquent à partir du 2 décembre 2027.'},
+ {id:'ac_cse',cat:'Dialogue social',t:'Ouvrir ou compléter l’information-consultation du CSE',fx:fx(0,5,8,2,0),cond:f=>f.has('cse:apres')||f.has('cse:non')||f.has('cse_conflit'),must:'t1',why:'La consultation doit précéder la décision.'},
+ {id:'ac_cse_suivi',cat:'Dialogue social',t:'Prévoir un point de suivi régulier avec le CSE',fx:fx(0,2,5,1,0)},
+ {id:'ac_biais',cat:'Cadre légal',t:'Auditer les biais de l’outil avant et pendant l’usage',fx:fx(0,5,5,1,0),cond:f=>f.has('biais:aucun')||f.has('biais:ponctuel')||f.has('biais_reste'),must:'t1',why:'Tu n’as pas d’audit en place : les personnes concernées en supportent le risque.'},
+ {id:'ac_info',cat:'Transparence',t:'Informer les personnes concernées : finalité, rôle de l’IA, droit à une intervention humaine',fx:fx(0,5,6,1,0),cond:f=>f.has('transp:interne')||f.has('transp:rien'),must:'t1',why:'L’information doit être claire et préalable.'},
+ {id:'ac_aipd',cat:'Confidentialité',t:'Réaliser une analyse d’impact (AIPD) avec le délégué à la protection des données',fx:fx(0,6,2,0,0),cond:f=>f.has('haut_retenu')||f.has('data:pseudo')||f.has('data:reelles'),must:'t2',why:'Un traitement à risque élevé demande une analyse d’impact avant sa mise en œuvre.'},
+ {id:'ac_donnees',cat:'Confidentialité',t:'Interdire la saisie de données réelles dans les outils grand public',fx:fx(0,6,3,0,1),cond:f=>f.has('data:reelles'),must:'t1',why:'Tu as déjà vécu l’incident : ferme la porte.'},
+ {id:'ac_mesure',cat:'Sobriété numérique',t:'Mesurer l’usage (requêtes, volume de données) et fixer un budget',fx:fx(0,0,0,0,7)},
+ {id:'ac_petit',cat:'Sobriété numérique',t:'Choisir l’outil le plus simple qui suffit et supprimer les données inutiles',fx:fx(1,1,0,0,8)},
+ {id:'ac_accomp',cat:'Accompagnement social',t:'Plan d’accompagnement des métiers touchés : formation, mobilité, entretiens individuels',fx:fx(1,1,6,5,0)},
+ {id:'ac_qvct',cat:'QVCT',t:'Évaluer avec les salariés l’effet sur la charge, l’autonomie et le sens du travail',fx:fx(0,1,4,7,0)},
+ {id:'ac_bilan',cat:'Pilotage',t:'Faire un bilan à 6 mois avec des indicateurs partagés',fx:fx(3,2,3,1,1)},
+ {id:'ac_etendre',cat:'Déploiement',t:'Étendre le pilote à tout le périmètre si les indicateurs le justifient',fx:fx(7,0,0,0,-2),cond:f=>f.has('pilote_present')}
+];
+const NEED_CATS=[{cat:'Sobriété numérique',msg:'au moins une action de sobriété numérique'},{cat:'Accompagnement social',msg:'au moins une action d’accompagnement social'},{cat:'QVCT',msg:'au moins une action sur la qualité de vie et des conditions de travail'}];
+
+/* ===== Missions techniques ===== */
+const MESSAGES={
+ projet:`Tu es mon concepteur d'applications Google Apps Script. Je ne suis pas développeur : explique simplement, en français, avec tutoiement et ton concis.
+
+Méthode :
+- Pour une nouvelle application, pose au plus trois questions de cadrage, puis propose un plan court et attends ma validation avant de coder.
+- Livre toujours des fichiers complets prêts à coller, jamais des extraits.
+- Dis en une phrase ce qui a changé, puis indique ce que je dois faire : coller, enregistrer, « Nouvelle version », lancer telle fonction.
+- Ne modifie jamais mes données existantes sans me prévenir.
+- Fais des modifications ciblées plutôt que des refontes.
+- N'utilise que des données fictives : aucune donnée réelle de salarié.
+
+Contexte : application « Budget formation » (suivi des demandes de formation et du budget restant), liée à une feuille Google Sheets.`,
+ prefs:`Réponds toujours en français, avec des mots simples et un ton concis. Je suis débutant : explique chaque étape pas à pas. Quand tu me donnes du code, donne-moi le fichier complet, jamais un extrait.`,
+ test1:`Présente-toi en une phrase.`,
+ test2:`Je veux créer une application. Que fais-tu en premier ?`,
+ code:`function testAutorisation() {
+  const feuille = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  feuille.appendRow([new Date(), 'Test réussi']);
+}`,
+ plan:`Voici la fiche de cadrage de l'application. Propose-moi un plan court en étapes numérotées, avec pour chaque étape ce que je devrai faire. Ne donne pas encore de code.`,
+ fichiers:`Le plan est validé. Génère maintenant les fichiers complets de l'application : un fichier Code.gs et un fichier Index.html. L'application lit et écrit dans l'onglet « Demandes » et lit le budget annuel dans la cellule B1 de l'onglet « Paramètres ». Donne-moi les deux fichiers complets, prêts à coller, puis dis-moi ce que je dois faire ensuite.`,
+ modif:`Modification demandée : [décris UNE seule chose]. Ne change rien d'autre. Donne-moi le ou les fichiers complets modifiés, et dis-moi en une phrase ce qui a changé.`,
+ donnees:`Numéro\tDate\tSalarié\tService\tFormation\tCoût (€)\tStatut
+1\t05/10/2026\tCamille Martin\tMarketing\tInitiation à l'IA générative\t1200\tValidée
+2\t06/10/2026\tLucas Bernard\tVentes\tNégociation commerciale\t1800\tValidée
+3\t07/10/2026\tInès Moreau\tRH\tDroit du travail, mise à jour\t950\tRéalisée
+4\t08/10/2026\tHugo Petit\tInformatique\tCybersécurité, bases\t2400\tDemandée
+5\t09/10/2026\tLéa Roux\tFinance\tExcel avancé\t800\tValidée
+6\t12/10/2026\tTom Garnier\tMarketing\tRéférencement naturel\t1500\tRefusée
+7\t13/10/2026\tSarah Lambert\tVentes\tGestion de la relation client\t1100\tDemandée
+8\t14/10/2026\tNina Faure\tRH\tConduite d'entretiens\t1350\tValidée
+9\t15/10/2026\tPaul Durand\tInformatique\tGestion de projet agile\t2000\tRéalisée
+10\t16/10/2026\tEmma Girard\tFinance\tAnalyse financière\t1700\tDemandée`
+};
+const CALIBRATEUR='https://pierrickbriand.github.io/Calibrateur-de-preferences-Claude/';
+
+const MISSIONS={
+ m1:{title:'Régler Claude',time:'10 minutes',intro:'Tu règles Claude pour que tout le monde obtienne un comportement simple et prévisible. Coche chaque geste quand il est fait.',
+  steps:[
+   {id:'a1',t:'Ouvre Claude',d:'<p>Ouvre un nouvel onglet (signe <b>+</b> en haut du navigateur), écris <b>claude.ai</b> dans la barre d’adresse et connecte-toi avec ton compte personnel.</p>'},
+   {id:'a2',t:'Ouvre les paramètres',d:'<p>Clique sur ton nom en bas à gauche, puis sur <b>Paramètres</b>. Une fenêtre s’ouvre avec une liste de rubriques à gauche.</p>',fig:'claude_menu'},
+   {id:'a3',t:'Choisis ton réglage de confidentialité',d:'<p>Rubrique <b>Confidentialité</b> : repère l’option qui autorise l’usage de tes conversations pour améliorer Claude. Lis la phrase en entier et décide en connaissance de cause. Dans cet atelier, tu n’écris que des données fictives.</p>',fig:'claude_settings'},
+   {id:'a4',t:'Désactive la mémoire pour l’atelier',d:'<p>Rubrique <b>Capacités</b> (ou Mémoire) : désactive la génération de mémoire à partir de l’historique. Les réponses restent prévisibles. Si l’option n’existe pas dans ta formule, passe à la suite.</p>'},
+   {id:'a5',t:'Ne connecte aucun service',d:'<p>Rubrique <b>Connecteurs</b> : déconnecte ce qui serait branché (messagerie, agenda, Drive). Moins il y a de services connectés, moins tu risques d’exposer des données réelles.</p>'},
+   {id:'a6',t:'Prépare tes instructions personnelles avec le calibrateur',d:'<p>Ouvre le calibrateur, rédige tes préférences, analyse-les, puis colle le résultat dans <b>Paramètres, Profil, « Instructions pour Claude »</b>. Clique sur <b>Enregistrer</b>.</p><p>À défaut, colle ce texte de départ :</p>',link:{t:'Ouvrir le calibrateur de préférences',u:CALIBRATEUR},copy:{label:'Instructions de départ',text:MESSAGES.prefs},fig:'claude_profile'},
+   {id:'a7',t:'Teste',d:'<p>Clique sur <b>Nouvelle discussion</b> et envoie ce message.</p>',copy:{label:'Message de test',text:MESSAGES.test1}}
+  ],
+  ctrl:'Point de contrôle : Claude te répond en français, en une ou deux phrases simples.',
+  help:[['Je ne vois pas « Paramètres »','Clique sur ton nom en bas à gauche. Si la fenêtre est trop petite, agrandis-la.'],['Une option n’existe pas','Elle n’est pas disponible dans ta formule. Passe à la suite et signale-le.']]},
+ m2:{title:'Créer le projet dédié',time:'10 minutes',intro:'Un projet est un dossier de travail dans Claude. Il garde des instructions et des fichiers que Claude relit à chaque nouvelle discussion.',
+  steps:[
+   {id:'b1',t:'Crée le projet',d:'<p>Dans le menu de gauche, clique sur <b>Projets</b>, puis sur <b>Nouveau projet</b>. Nom : <b>Budget formation</b>. Description : <b>Application de suivi des demandes de formation et du budget restant</b>.</p>',fig:'claude_projects'},
+   {id:'b2',t:'Ajoute les instructions du projet',d:'<p>Dans la page du projet, clique sur <b>Instructions</b> (le signe + ou le crayon), colle le texte ci-dessous et enregistre.</p>',copy:{label:'Instructions du projet',text:MESSAGES.projet},fig:'claude_project_page'},
+   {id:'b3',t:'Repère la zone des fichiers',d:'<p>Tu n’ajoutes rien pour l’instant. Plus tard, ton équipe y déposera la <b>fiche de cadrage</b>.</p>'},
+   {id:'b4',t:'Teste le projet',d:'<p>Dans la zone de saisie du projet, envoie ce message.</p>',copy:{label:'Message de test',text:MESSAGES.test2}}
+  ],
+  ctrl:'Point de contrôle : Claude te tutoie, annonce qu’il va te poser au plus trois questions de cadrage et ne donne pas de code tout de suite.',
+  help:[['Claude donne du code tout de suite','Retourne à l’étape 2 : les instructions du projet n’ont probablement pas été enregistrées.']]},
+ m3:{title:'Créer la feuille et le script',time:'20 minutes',intro:'Tu crées une feuille de calcul (un tableau en ligne), puis tu y relies un petit programme appelé script. On ouvre le script depuis la feuille : les deux sont alors reliés.',
+  steps:[
+   {id:'c1',t:'Ouvre Google Drive',d:'<p>Ouvre un nouvel onglet, écris <b>drive.google.com</b> et connecte-toi avec ton adresse Gmail personnelle.</p>'},
+   {id:'c2',t:'Crée la feuille',d:'<p>Clique sur <b>+ Nouveau</b>, puis <b>Google Sheets</b>, puis <b>Feuille de calcul vierge</b>.</p>',fig:'drive_new'},
+   {id:'c3',t:'Nomme la feuille et ouvre Apps Script',d:'<p>Remplace « Feuille de calcul sans titre » par <b>Budget formation</b>. Puis menu <b>Extensions</b>, <b>Apps Script</b>. Un nouvel onglet s’ouvre.</p>',fig:'sheets_ext'},
+   {id:'c4',t:'Nomme le projet de script',d:'<p>En haut à gauche, clique sur « Projet sans titre », écris <b>Budget formation</b>, puis clique sur <b>Renommer</b>.</p>',fig:'script_editor'},
+   {id:'c5',t:'Colle le code de test et enregistre',d:'<p>Clique dans la grande zone de texte, sélectionne tout (<kbd>Ctrl</kbd> + <kbd>A</kbd>, ou <kbd>Cmd</kbd> + <kbd>A</kbd> sur Mac), supprime, puis colle ce code. Clique sur la disquette.</p>',copy:{label:'Code Code.gs',text:MESSAGES.code}},
+   {id:'c6',t:'Lance le test et donne l’autorisation',d:'<p>Choisis <b>testAutorisation</b> dans la liste, puis clique sur <b>Exécuter</b>. Google demande ton accord : c’est normal, le script est le tien et il n’écrit qu’une ligne dans ta feuille.</p><p>Suis l’écran : <b>Examiner les autorisations</b>, ton compte, <b>Paramètres avancés</b>, <b>Accéder à Budget formation (non sécurisé)</b>, <b>Autoriser</b>. Ne contourne jamais cet écran pour un script reçu d’un tiers.</p>',fig:'script_auth'},
+   {id:'c7',t:'Vérifie le résultat',d:'<p>Reviens à l’onglet de ta feuille. Une ligne est apparue : une date en colonne A et les mots <b>Test réussi</b> en colonne B.</p>'}
+  ],
+  ctrl:'Point de contrôle : la ligne « Test réussi » est visible dans ta feuille.',
+  help:[['Je n’ai pas le menu Extensions','Tu es sur Google Drive et non dans la feuille. Ouvre ta feuille « Budget formation ».'],['L’éditeur ne s’ouvre pas','Le navigateur a peut-être bloqué la fenêtre. Autorise les fenêtres depuis l’icône à droite de la barre d’adresse.'],['Plusieurs comptes Google sont connectés','Ouvre une fenêtre de navigation privée et connecte-toi uniquement avec ton Gmail personnel.'],['Rien n’apparaît dans la feuille','Vérifie que tu as ouvert Apps Script depuis la feuille, que tu as enregistré, puis relance la fonction.']]}
+};
+
+/* ===== Schémas dessinés (SVG simplifiés, pas des captures d'écran) ===== */
+const SC={ink:'#0F172A',mute:'#64748B',line:'#CBD5E1',fill:'#F1F5F9',white:'#FFFFFF',acc:'#059669',soft:'#ECFDF5'};
+const sR=(x,y,w,h,o={})=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${o.r??6}" fill="${o.f??SC.white}" stroke="${o.s??SC.line}" stroke-width="${o.sw??1}"${o.d?` stroke-dasharray="${o.d}"`:''}/>`;
+const sT=(x,y,s,o={})=>`<text x="${x}" y="${y}" font-size="${o.z??12}" font-weight="${o.w??400}" fill="${o.c??SC.ink}" text-anchor="${o.a??'start'}" font-family="inherit">${esc(s)}</text>`;
+const sL=(x1,y1,x2,y2,o={})=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${o.s??SC.line}" stroke-width="${o.sw??1}"/>`;
+const sC=(x,y,r,o={})=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${o.f??SC.fill}" stroke="${o.s??SC.line}" stroke-width="${o.sw??1}"/>`;
+/* zone à cliquer : cadre vert + pastille numérotée */
+const sH=(x,y,w,h,n,o={})=>{const bx=o.bx??x-2,by=o.by??y-2;return `<rect x="${x-3}" y="${y-3}" width="${w+6}" height="${h+6}" rx="8" fill="#059669" fill-opacity=".10" stroke="#059669" stroke-width="2.5"/>`+
+  `<circle cx="${bx}" cy="${by}" r="10.5" fill="#059669"/><text x="${bx}" y="${by+4.2}" font-size="12.5" font-weight="700" fill="#fff" text-anchor="middle" font-family="inherit">${n}</text>`;};
+const sWin=(w,h,title)=>sR(1,1,w-2,h-2,{r:10,f:SC.white,s:SC.line,sw:1.5})+sR(1,1,w-2,26,{r:10,f:SC.fill,s:SC.line,sw:1.5})+sC(18,14,4.5,{f:'#CBD5E1',s:'none'})+sC(32,14,4.5,{f:'#CBD5E1',s:'none'})+sC(46,14,4.5,{f:'#CBD5E1',s:'none'})+sT(w/2,18,title,{z:11,c:SC.mute,a:'middle'});
+const sToggle=(x,y,on)=>sR(x,y,34,18,{r:9,f:on?SC.acc:'#CBD5E1',s:'none'})+sC(on?x+25:x+9,y+9,7,{f:'#fff',s:'none'});
+const sLines=(x,y,n,w,gap=14)=>Array.from({length:n},(_,i)=>sR(x,y+i*gap,i===n-1?w*0.6:w,6,{r:3,f:'#E2E8F0',s:'none'})).join('');
+const sSvg=(inner,alt)=>`<svg viewBox="0 0 640 360" role="img" aria-label="${esc(alt)}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+
+/* Fenêtre type de Claude : barre latérale à gauche */
+function claudeShell(sideItems,activeIdx){
+  let s=sWin(640,360,'claude.ai')+sR(1,28,170,331,{r:0,f:'#F8FAFC',s:SC.line});
+  sideItems.forEach((it,i)=>{const y=44+i*30;if(i===activeIdx)s+=sR(10,y-4,150,24,{r:6,f:'#E2E8F0',s:'none'});s+=sT(22,y+12,it,{z:12.5,w:i===activeIdx?600:400});});
+  return s;
+}
+const SCHEMAS={
+ claude_menu:{alt:'Fenêtre de Claude : menu du compte en bas à gauche, puis Paramètres',
+  cap:['Clique sur ton nom (ou tes initiales) en bas à gauche.','Dans le petit menu, clique sur « Paramètres ».'],
+  svg:()=>claudeShell(['Nouvelle discussion','Discussions','Projets','Artefacts'],-1)+
+   sR(190,230,240,52,{r:10})+sT(205,252,'Pose ta question à Claude',{z:12,c:SC.mute})+sR(14,310,150,38,{r:8,f:'#fff'})+sC(34,329,11,{f:'#CBD5E1',s:'none'})+sT(54,333,'Ton nom',{z:12.5,w:600})+
+   sR(180,214,150,0,{})+sR(14,186,176,98,{r:10,f:'#fff',s:SC.line,sw:1.5})+sT(26,210,'Mon compte',{z:12})+sT(26,236,'Paramètres',{z:13,w:600})+sT(26,262,'Se déconnecter',{z:12})+
+   sH(14,310,150,38,1,{bx:12,by:312})+sH(22,222,118,20,2,{bx:150,by:232})},
+ claude_settings:{alt:'Fenêtre des paramètres de Claude avec la liste des rubriques à gauche',
+  cap:['Rubrique « Profil » (ou « Général ») : tes instructions personnelles.','Rubrique « Confidentialité » : choisis consciemment ton réglage.','Rubrique « Capacités » : l’option de mémoire se trouve ici.','Rubrique « Connecteurs » : ne branche rien pour cet atelier.'],
+  svg:()=>sWin(640,360,'Paramètres')+sR(1,28,170,331,{r:0,f:'#F8FAFC'})+
+   sT(24,64,'Profil',{z:13})+sT(24,104,'Confidentialité',{z:13})+sT(24,144,'Capacités',{z:13})+sT(24,184,'Connecteurs',{z:13})+
+   sT(200,66,'Améliorer Claude avec mes conversations',{z:12.5,w:600})+sLines(200,76,2,380)+sToggle(556,56,false)+
+   sT(200,150,'Générer de la mémoire à partir de l’historique',{z:12.5,w:600})+sLines(200,160,2,380)+sToggle(556,140,false)+
+   sT(200,236,'Services connectés',{z:12.5,w:600})+sR(200,248,230,34,{r:8,d:'4 3'})+sT(215,270,'Aucun connecteur',{z:12,c:SC.mute})+
+   sH(14,50,140,24,1,{bx:12,by:52})+sH(14,90,140,24,2,{bx:12,by:92})+sH(14,130,140,24,3,{bx:12,by:132})+sH(14,170,140,24,4,{bx:12,by:172})},
+ claude_profile:{alt:'Paramètres de Claude, rubrique Profil, zone Instructions pour Claude',
+  cap:['La grande zone de texte « Instructions pour Claude » (parfois « préférences »).','Le bouton « Enregistrer » : sans lui, rien n’est gardé.'],
+  svg:()=>sWin(640,360,'Paramètres : Profil')+sR(1,28,170,331,{r:0,f:'#F8FAFC'})+sR(10,44,150,28,{r:6,f:'#E2E8F0',s:'none'})+sT(24,63,'Profil',{z:13,w:600})+sT(24,104,'Confidentialité',{z:13})+sT(24,144,'Capacités',{z:13})+sT(24,184,'Connecteurs',{z:13})+
+   sT(196,60,'Compte  >  Profil  >  Instructions pour Claude',{z:12,c:SC.mute})+sT(196,92,'Quelles préférences Claude doit-il suivre ?',{z:13,w:600})+
+   sR(196,104,420,150,{r:8})+sLines(210,120,6,390,18)+sR(520,290,96,32,{r:8,f:SC.acc,s:'none'})+sT(568,311,'Enregistrer',{z:12.5,w:600,c:'#fff',a:'middle'})+
+   sH(196,104,420,150,1,{bx:194,by:102})+sH(520,290,96,32,2,{bx:518,by:288})},
+ claude_projects:{alt:'Claude : rubrique Projets et bouton Nouveau projet',
+  cap:['Clique sur « Projets » dans le menu de gauche.','Clique sur « Nouveau projet » (en haut à droite).'],
+  svg:()=>claudeShell(['Nouvelle discussion','Discussions','Projets','Artefacts'],2)+
+   sT(200,70,'Projets',{z:20,w:700})+sR(500,48,120,32,{r:8,f:SC.acc,s:'none'})+sT(560,69,'Nouveau projet',{z:12,w:600,c:'#fff',a:'middle'})+
+   sR(196,110,200,80,{r:10})+sT(210,136,'Un projet existant',{z:12.5,w:600})+sLines(210,148,2,160)+
+   sH(14,70,150,24,1,{bx:12,by:72})+sH(500,48,120,32,2,{bx:498,by:46})},
+ claude_project_page:{alt:'Page d’un projet Claude : instructions, fichiers et zone de saisie',
+  cap:['« Instructions du projet » : colle ici le texte fourni, puis enregistre.','« Fichiers du projet » : le bouton + ajoute ta fiche de cadrage.','Zone de saisie : tes discussions démarrent ici et suivent le projet.'],
+  svg:()=>claudeShell(['Nouvelle discussion','Discussions','Projets','Artefacts'],2)+
+   sT(196,64,'Budget formation',{z:20,w:700})+
+   sR(196,86,230,200,{r:10})+sT(210,110,'Discussions du projet',{z:12.5,w:600})+sLines(210,124,3,200,16)+
+   sR(442,86,184,92,{r:10})+sT(456,108,'Instructions',{z:12.5,w:600})+sT(584,108,'+',{z:18,w:600,c:SC.acc})+sLines(456,122,2,150)+
+   sR(442,190,184,96,{r:10})+sT(456,212,'Fichiers',{z:12.5,w:600})+sT(584,212,'+',{z:18,w:600,c:SC.acc})+sLines(456,226,2,150)+
+   sR(196,304,430,38,{r:10})+sT(212,328,'Écris ton message dans ce projet…',{z:12,c:SC.mute})+
+   sH(442,86,184,92,1,{bx:440,by:84})+sH(442,190,184,96,2,{bx:440,by:188})+sH(196,304,430,38,3,{bx:194,by:302})},
+ drive_new:{alt:'Google Drive : bouton Nouveau puis Google Sheets',
+  cap:['Clique sur « + Nouveau » en haut à gauche.','Clique sur « Google Sheets » (ou « Feuille de calcul Google »).','Si un second menu apparaît, choisis « Feuille de calcul vierge ».'],
+  svg:()=>sWin(640,360,'drive.google.com')+sR(14,44,110,40,{r:20,f:'#fff',s:SC.line,sw:1.5})+sT(69,69,'+ Nouveau',{z:13,w:600,a:'middle'})+
+   sT(150,70,'Mon Drive',{z:18,w:600})+sLines(150,96,4,440,24)+
+   sR(14,92,200,150,{r:10,f:'#fff',s:SC.line,sw:1.5})+sT(28,116,'Dossier',{z:12.5})+sT(28,146,'Import de fichier',{z:12.5})+sT(28,176,'Google Docs',{z:12.5})+sT(28,206,'Google Sheets',{z:13,w:600})+sT(28,232,'Google Slides',{z:12.5})+
+   sR(224,194,190,54,{r:10,f:'#fff',s:SC.line,sw:1.5})+sT(238,216,'Feuille de calcul vierge',{z:12.5,w:600})+sT(238,238,'À partir d’un modèle',{z:12})+
+   sH(14,44,110,40,1,{bx:12,by:46})+sH(18,192,190,22,2,{bx:208,by:198})+sH(230,202,178,22,3,{bx:420,by:206})},
+ sheets_ext:{alt:'Google Sheets : nom de la feuille et menu Extensions puis Apps Script',
+  cap:['Le titre en haut à gauche : remplace « Feuille de calcul sans titre » par « Budget formation ».','Menu « Extensions » dans la barre au-dessus du tableau.','Option « Apps Script » : elle ouvre l’éditeur dans un nouvel onglet.'],
+  svg:()=>sWin(640,360,'Google Sheets')+sT(36,52,'Budget formation',{z:15,w:600})+
+   ['Fichier','Édition','Affichage','Insertion','Format','Données','Outils','Extensions','Aide'].map((m,i)=>sT(28+i*66,86,m,{z:12,w:m==='Extensions'?600:400})).join('')+
+   sR(14,100,612,246,{r:0,f:'#fff',s:SC.line})+Array.from({length:7},(_,i)=>sL(14,122+i*32,626,122+i*32)).join('')+Array.from({length:6},(_,i)=>sL(14+i*102,100,14+i*102,346)).join('')+
+   sR(488,92,150,70,{r:10,f:'#fff',s:SC.line,sw:1.5})+sT(502,114,'Compléments',{z:12})+sT(502,140,'Apps Script',{z:13,w:600})+
+   sH(28,26,170,34,3,{bx:26,by:28})+sH(486,74,60,18,1,{bx:484,by:72})+sH(496,124,126,22,2,{bx:628,by:128})},
+ script_editor:{alt:'Éditeur Apps Script : nom du projet, fichiers, enregistrer, exécuter, déployer',
+  cap:['Nom du projet : clique, écris « Budget formation », puis « Renommer ».','Icône disquette : enregistre après chaque modification.','Liste des fonctions : choisis celle à lancer.','Bouton « Exécuter ».','Bouton bleu « Déployer » en haut à droite.','Liste « Fichiers » : Code.gs et, plus tard, Index.'],
+  svg:()=>sWin(640,360,'script.google.com')+sT(20,52,'Budget formation',{z:13,w:600})+
+   sR(14,62,612,34,{r:0,f:SC.fill,s:SC.line})+sT(30,84,'💾',{z:14})+sR(64,68,150,22,{r:5,f:'#fff'})+sT(76,84,'testAutorisation  ▾',{z:11})+sR(224,68,70,22,{r:5,f:'#fff'})+sT(259,84,'▶ Exécuter',{z:11,w:600,a:'middle'})+
+   sR(540,66,80,26,{r:6,f:'#2563EB',s:'none'})+sT(580,84,'Déployer ▾',{z:11.5,w:600,c:'#fff',a:'middle'})+
+   sR(14,96,130,250,{r:0,f:'#F8FAFC',s:SC.line})+sT(26,120,'Fichiers',{z:12,w:600})+sT(118,120,'+',{z:16,c:SC.acc,w:700})+sT(30,148,'Code.gs',{z:12.5})+sT(30,172,'Index',{z:12.5,c:SC.mute})+
+   sR(144,96,482,250,{r:0,f:'#fff',s:SC.line})+sLines(160,114,9,420,22)+
+   sH(16,36,130,22,1,{bx:14,by:34})+sH(26,68,28,22,2,{bx:24,by:66})+sH(64,68,150,22,3,{bx:62,by:66})+sH(224,68,70,22,4,{bx:222,by:66})+sH(540,66,80,26,5,{bx:538,by:64})+sH(22,134,100,22,6,{bx:12,by:140})},
+ script_auth:{alt:'Écran d’autorisation Google : Examiner les autorisations, Paramètres avancés, Accéder au projet',
+  cap:['Clique sur « Examiner les autorisations » et choisis ton compte Gmail.','Sur l’écran « Google n’a pas validé cette application », clique sur « Paramètres avancés ».','Puis sur « Accéder à Budget formation (non sécurisé) », et enfin « Autoriser ».'],
+  svg:()=>sWin(640,360,'Autorisation requise')+
+   sR(30,50,270,280,{r:10,f:'#fff',s:SC.line,sw:1.5})+sT(46,80,'Autorisation requise',{z:14,w:700})+sLines(46,96,3,230)+sR(46,160,150,34,{r:8,f:'#2563EB',s:'none'})+sT(121,182,'Examiner les autorisations',{z:11,w:600,c:'#fff',a:'middle'})+
+   sR(330,50,284,280,{r:10,f:'#fff',s:SC.line,sw:1.5})+sT(346,80,'Google n’a pas validé',{z:13.5,w:700})+sT(346,98,'cette application',{z:13.5,w:700})+sLines(346,112,3,240)+
+   sT(346,190,'Paramètres avancés',{z:12.5,c:'#2563EB',w:600})+sT(346,230,'Accéder à Budget formation',{z:12,c:'#2563EB'})+sT(346,246,'(non sécurisé)',{z:12,c:'#2563EB'})+
+   sR(520,288,80,28,{r:8,f:'#fff'})+sT(560,306,'Retour',{z:11.5,a:'middle'})+
+   sH(46,160,150,34,1,{bx:44,by:158})+sH(344,176,140,20,2,{bx:336,by:182})+sH(344,216,200,36,3,{bx:336,by:222})},
+ script_deploy:{alt:'Fenêtre Nouveau déploiement : Application Web, description, exécuter en tant que, qui a accès',
+  cap:['Roue dentée à côté de « Sélectionner le type » : choisis « Application Web ».','Description : écris « Version 1 ».','« Exécuter en tant que » : Moi.','« Qui a accès » : Moi uniquement (le réglage le plus sûr).','Bouton « Déployer ».'],
+  svg:()=>sWin(640,360,'Nouveau déploiement')+sT(30,60,'Sélectionner le type',{z:12.5,w:600})+sC(190,56,12,{f:'#fff',s:SC.line})+sT(190,61,'⚙',{z:14,a:'middle'})+sT(214,60,'Application Web',{z:12.5})+
+   sT(30,100,'Description',{z:12})+sR(30,108,570,28,{r:6})+sT(42,127,'Version 1',{z:12})+
+   sT(30,162,'Exécuter en tant que',{z:12})+sR(30,170,270,28,{r:6})+sT(42,189,'Moi (ton adresse Gmail)',{z:12})+
+   sT(330,162,'Qui a accès',{z:12})+sR(330,170,270,28,{r:6})+sT(342,189,'Moi uniquement',{z:12})+
+   sR(500,290,100,32,{r:8,f:'#2563EB',s:'none'})+sT(550,311,'Déployer',{z:12.5,w:600,c:'#fff',a:'middle'})+
+   sH(178,42,28,28,1,{bx:176,by:40})+sH(30,108,570,28,2,{bx:28,by:106})+sH(30,170,270,28,3,{bx:28,by:168})+sH(330,170,270,28,4,{bx:328,by:168})+sH(500,290,100,32,5,{bx:498,by:288})},
+ script_newversion:{alt:'Gérer les déploiements : crayon, Nouvelle version, Déployer',
+  cap:['Menu « Déployer », puis « Gérer les déploiements » : clique sur le crayon.','Dans la liste « Version », choisis « Nouvelle version ».','Clique sur « Déployer », puis recharge la page de ton application (F5).'],
+  svg:()=>sWin(640,360,'Gérer les déploiements')+sR(30,50,580,70,{r:10})+sT(46,78,'Version 1',{z:13,w:600})+sT(46,100,'Application Web',{z:12,c:SC.mute})+sT(570,86,'✎',{z:20,a:'middle',c:SC.ink})+
+   sT(30,160,'Version',{z:12.5,w:600})+sR(30,168,300,30,{r:6})+sT(42,188,'Nouvelle version  ▾',{z:12.5})+
+   sR(500,290,100,32,{r:8,f:'#2563EB',s:'none'})+sT(550,311,'Déployer',{z:12.5,w:600,c:'#fff',a:'middle'})+
+   sH(552,66,36,38,1,{bx:550,by:64})+sH(30,168,300,30,2,{bx:28,by:166})+sH(500,290,100,32,3,{bx:498,by:288})}
+};
+
+/* figure HTML : le schéma dessiné, remplacé par ta capture si le fichier captures/<id>.png existe */
+function figureHtml(id){
+  const d=SCHEMAS[id]; if(!d) return '';
+  const caps=d.cap.map(c=>`<li>${esc(c)}</li>`).join('');
+  return `<figure class="fig" data-fig="${id}">${sSvg(d.svg(),d.alt)}<img src="captures/${id}.png" alt="${esc(d.alt)} (capture)" onload="this.style.display='block';this.parentNode.querySelector('svg').style.display='none';">`+
+    `<figcaption><span class="tag">Schéma simplifié, pas une capture : l’écran peut varier selon ta formule ou la version.</span><ol>${caps}</ol></figcaption></figure>`;
+}
+
+/* ===== Interface ===== */
+const $=s=>document.querySelector(s);
+const SHORT={valeur:'Gain',legal:'Conformité',conf:'Confiance',qvct:'QVCT',sob:'Sobriété'};
+const JUST={perimetre:12,adopt:15,human:15,qualif:15,garde:20,scene:8,roadmap:20};
+let D=null; /* état dérivé courant */
+
+function toast(msg){const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3200);}
+function fmtTime(ts){if(!ts)return null;try{return new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(ts));}catch(e){return new Date(ts).toLocaleString();}}
+function deltaChips(f){
+  if(!f)return '';
+  return '<div class="deltas" aria-label="Effets de cette décision">'+IND.map(i=>{const v=Math.round(f[i.k]||0);const c=v>0?'p':v<0?'n':'z';return `<span class="delta ${c}">${SHORT[i.k]} ${v>0?'+':''}${v}</span>`;}).join('')+'</div>';
+}
+function chipsFor(st){
+  const ch=CHAPS.find(c=>c.id===st.chap);let h=`<span class="chip">${esc(ch.t)}</span>`;
+  if(st.obj)h+=`<span class="chip obj" title="${esc(OBJ[st.obj])}">Objectif ${st.obj}</span>`;
+  if(st.scene)h+=`<span class="chip warn">Nouvelle étape : conséquence de tes choix</span><span class="chip obj">Objectif ${sceneOf(st).obj}</span>`;
+  return `<div class="eyebrow">${h}</div>`;
+}
+function objLine(n){return n?`<p class="hint">${esc(OBJ[n])}.</p>`:'';}
+
+/* ----- blocs communs ----- */
+function justifBox(st,a,locked,label,min){
+  const v=a.justif||'';const n=wc(v);
+  return `<div class="field"><label for="j-${st.id}">${esc(label)}</label><textarea id="j-${st.id}" data-field="justif" data-step="${st.id}" ${locked?'disabled':''} placeholder="Écris avec tes mots, en t’appuyant sur ce que tu as lu.">${esc(v)}</textarea><div class="count ${n>=min?'ok':''}" id="cnt-${st.id}">${n} mot${n>1?'s':''} sur ${min} au minimum</div></div>`;
+}
+function exploreBox(st,a,locked,ids,min){
+  const sel=a.sources||[];
+  return `<div class="box info"><h3>Avant de décider, explore les textes</h3><p>Ouvre au moins ${min} sources et coche celles que tu as vraiment lues.</p><div class="explore">`+
+   ids.map(id=>{const s=SRC[id];return `<label><input type="checkbox" data-act="src" data-step="${st.id}" data-val="${id}" ${sel.includes(id)?'checked':''} ${locked?'disabled':''}><span><a href="${s.u}" target="_blank" rel="noopener">${esc(s.t)}</a><small>${esc(s.w)}</small></span></label>`;}).join('')+
+   `</div><p class="hint">${esc(SRC_NOTE)}</p></div>`;
+}
+function commitZone(st,locked,label){
+  if(locked)return `<div class="commitzone" id="commitzone"></div>`;
+  const m=unmet(st);
+  return `<div class="commitzone" id="commitzone"><div class="nav"><span></span><button class="btn primary" data-act="commit" data-step="${st.id}" ${m.length?'disabled':''}>${esc(label||'Valider ma décision')}</button></div>`+
+   (m.length?`<ul class="checks">${m.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'<p class="hint">Cette décision t’engage : tu ne pourras plus la modifier.</p>')+`</div>`;
+}
+function navBar(st,D){
+  const vis=D.visible,i=vis.findIndex(s=>s.id===st.id);
+  const prev=i>0?`<button class="btn" data-act="goto" data-step="${vis[i-1].id}">Étape précédente</button>`:'<span></span>';
+  const can=isDone(st)&&i<vis.length-1;
+  const next=i<vis.length-1?`<button class="btn ${can?'primary':''}" data-act="goto" data-step="${vis[i+1].id}" ${can?'':'disabled'}>Étape suivante</button>`:'<span></span>';
+  return `<div class="nav">${prev}${next}</div>`;
+}
+
+/* ----- validations ----- */
+function unmet(st){
+  const a=A(st.id),m=[];const j=wc(a.justif);
+  const need=(min,l)=>{if(j<min)m.push(`${l} (${j} mots sur ${min}).`);};
+  if(st.kind==='accueil'){if(!(a.pseudo||'').trim())m.push('Écris un pseudo ou un nom d’équipe.');}
+  else if(st.kind==='perimetre'){if(!a.choice)m.push('Choisis un périmètre.');need(JUST.perimetre,'Explique ton choix');}
+  else if(st.kind==='scene'){if(!a.choice)m.push('Choisis une réponse.');need(JUST.scene,'Explique ta décision');}
+  else if(st.kind==='usages'){
+    const ul=st.mode==='human'?usagesList().filter(retained):usagesList();const p=a.pick||{};
+    if(st.mode==='human'&&!ul.length)return m;
+    const left=ul.filter(u=>!p[u.id]).length;if(left)m.push(`Il reste ${left} usage${left>1?'s':''} à traiter.`);
+    if(st.mode==='qualif'&&(a.sources||[]).length<2)m.push('Coche au moins 2 sources lues.');
+    need(JUST[st.mode],'Explique ton raisonnement');
+  }
+  else if(st.kind==='garde'){const p=a.pick||{};const left=GARDE.filter(g=>!p[g.id]).length;if(left)m.push(`Il reste ${left} question${left>1?'s':''} à trancher.`);if((a.sources||[]).length<2)m.push('Coche au moins 2 sources lues.');need(JUST.garde,'Explique ton raisonnement');}
+  else if(st.kind==='roadmap'){roadmapChecks(a).forEach(c=>{if(!c.ok)m.push(c.t);});need(JUST.roadmap,'Explique l’ordre de tes actions');}
+  else if(st.kind==='synthese'){SYN_FIELDS.forEach(f=>{const n=wc((a.fields||{})[f.k]);if(n<f.min)m.push(`${f.t} : ${n} mots sur ${f.min}.`);});}
+  return m;
+}
+function refreshCommit(st){
+  const z=$('#commitzone');if(!z)return;const a=A(st.id);if(a.done)return;
+  const label=st.kind==='synthese'?'Valider mon diagnostic':st.kind==='roadmap'?'Valider ma feuille de route':'Valider ma décision';
+  z.outerHTML=fr(st.kind==='accueil'?commitZoneSimple(st,'Commencer le parcours'):commitZone(st,false,label));
+  const c=$('#cnt-'+st.id);if(c){const n=wc(a.justif),min=JUST[st.kind==='usages'?st.mode:st.kind==='perimetre'?'perimetre':st.kind==='scene'?'scene':st.kind]||0;c.textContent=`${n} mot${n>1?'s':''} sur ${min} au minimum`;c.className='count '+(n>=min?'ok':'');}
+}
+
+/* ----- accueil ----- */
+function renderAccueil(st){
+  const a=A(st.id);
+  return `${chipsFor(st)}<h1>Budget formation : ton parcours pas à pas</h1>
+  <p class="lead">Tu construis une application et, en même temps, tu décides comme un(e) futur(e) DRH. Chaque décision a des conséquences. Ton chemin ne ressemblera pas à celui de ton voisin.</p>
+  <div class="field"><label for="pseudo">Ton pseudo ou le nom de ton équipe</label><input type="text" id="pseudo" data-field="pseudo" value="${esc(a.pseudo||'')}" ${a.done?'disabled':''} autocomplete="off" placeholder="Un pseudo suffit : pas de nom réel"></div>
+  <div class="box info"><h3>Comment ça marche</h3><ul><li>Des <b>missions techniques</b> te guident clic par clic : Claude, Google Sheets, Apps Script.</li><li>Des <b>décisions RH</b> te demandent de choisir, de justifier et de lire les textes (AI Act, RGPD, Code du travail).</li><li>Une décision validée t’<b>engage</b> : elle change tes indicateurs et ouvre ou ferme des étapes.</li><li>À la fin, tu présentes un <b>diagnostic</b> et un plan d’action.</li></ul></div>
+  <div class="box warn"><h3>Sauvegarde : lis ceci</h3><p>Cette page garde ton travail <b>sur cet appareil et dans ce navigateur</b>. Il peut disparaître si tu vides le cache, changes d’ordinateur ou navigues en mode privé.</p><p><b>À la fin de chaque séance</b> : clique sur « Enregistrer » (<kbd>Ctrl</kbd> + <kbd>S</kbd>) pour obtenir un fichier de projet, et sur « Exporter PDF » (<kbd>Ctrl</kbd> + <kbd>E</kbd>) pour garder une trace lisible. Pour reprendre ailleurs : « Ouvrir » (<kbd>Alt</kbd> + <kbd>O</kbd>) puis choisis ton fichier.</p></div>
+  <details><summary>Les six objectifs que tu travailles</summary><ol>${[1,2,3,4,5,6].map(n=>`<li>${esc(OBJ[n].replace(/^Objectif \d : /,''))}</li>`).join('')}</ol></details>
+  <div class="box"><h3>Règle d’or</h3><p>Aucune donnée réelle : ni nom, ni salaire, ni évaluation de vraies personnes. Les cas de ce parcours sont inventés.</p></div>
+  ${a.done?'':commitZoneSimple(st,'Commencer le parcours')}`+(a.done?navBar(st,D):'');
+}
+function commitZoneSimple(st,label){const m=unmet(st);return `<div class="commitzone" id="commitzone"><div class="nav"><button class="btn" data-act="open">Ouvrir un fichier de projet</button><button class="btn primary" data-act="commit" data-step="${st.id}" ${m.length?'disabled':''}>${esc(label)}</button></div>${m.length?`<ul class="checks">${m.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}</div>`;}
+
+/* ----- missions ----- */
+function buildM4(){
+  const f=D.flags;const rules=rulesFromPath(f);
+  const consigne='Ajoute à la fiche de cadrage les règles de gestion suivantes, issues de mes décisions RH :\n'+rules.map(r=>'- '+r).join('\n')+'\nReprends-les dans le plan, puis dans le code.';
+  return {title:'Construire « Budget formation »',time:'1 h 30',
+   intro:'Tu construis maintenant l’application. Tes décisions RH deviennent des règles de gestion : elles changent ce que tu demandes à Claude. Deux étudiants ne demanderont donc pas exactement la même chose.',
+   steps:[
+    {id:'k1',t:'Transforme tes décisions en règles de gestion',d:'<p>Voici les règles qui découlent de ton chemin. Ajoute-les à ta fiche de cadrage.</p><ul>'+rules.map(r=>`<li>${esc(r)}</li>`).join('')+'</ul>',copy:{label:'À ajouter dans ta fiche de cadrage',text:consigne}},
+    {id:'k2',t:'Remplis la fiche de cadrage avec ton équipe',d:'<p>Réponds aux trois questions : qui utilise l’application, quelles données entrent, quel résultat sort. Ajoute les règles de gestion et le « hors périmètre ». Utilise la fiche de cadrage distribuée par ton enseignant.</p>'},
+    {id:'k3',t:'Ajoute la fiche au projet Claude',d:'<p>Exporte la fiche en PDF. Dans le projet <b>Budget formation</b>, zone <b>Fichiers</b>, clique sur le signe <b>+</b> et importe le fichier.</p>',fig:'claude_project_page'},
+    {id:'k4',t:'Demande un plan, sans code',d:'<p>Ouvre une discussion dans le projet et envoie ce message. Relis le plan : colonnes, indicateurs, règles de gestion. Ne passe au code qu’une fois le plan validé.</p>',copy:{label:'Demande de plan',text:MESSAGES.plan}},
+    {id:'k5',t:'Prépare les données fictives',d:'<p>Dans ta feuille, renomme l’onglet en <b>Demandes</b>. Sélectionne la cellule A1 et colle ces lignes. Crée un onglet <b>Paramètres</b> : « Budget annuel » en A1 et <b>20000</b> en B1.</p>',copy:{label:'Dix demandes fictives',text:MESSAGES.donnees}},
+    {id:'k6',t:'Demande les fichiers complets',d:'<p>Envoie ce message dans la même discussion. Tu dois recevoir deux fichiers complets : <b>Code.gs</b> et <b>Index.html</b>.</p>',copy:{label:'Demande des fichiers',text:MESSAGES.fichiers}},
+    {id:'k7',t:'Colle les deux fichiers dans Apps Script',d:'<p>Dans <b>Code.gs</b> : sélectionne tout, supprime, colle, enregistre. Puis clique sur <b>+</b> à côté de « Fichiers », choisis <b>HTML</b>, nomme-le exactement <b>Index</b>, colle le second fichier et enregistre.</p>',fig:'script_editor'},
+    {id:'k8',t:'Déploie l’application',d:'<p><b>Déployer</b>, <b>Nouveau déploiement</b>, type <b>Application Web</b>, description « Version 1 », exécuter en tant que <b>Moi</b>, accès <b>Moi uniquement</b>, puis <b>Déployer</b>. Copie l’adresse obtenue et ouvre-la dans un nouvel onglet.</p>',fig:'script_deploy'},
+    {id:'k9',t:'Vérifie les calculs à la main',d:'<p>Avec les dix lignes fictives et un budget de 20 000 €, tu dois lire : budget engagé <b>8 100 €</b>, budget restant <b>11 900 €</b>. Essaie aussi un coût de 0, un champ vide et un dépassement de budget. Si Claude te donne un autre résultat, c’est à toi de trouver pourquoi.</p>'},
+    {id:'k10',t:'Améliore par petites modifications',d:'<p>Une seule demande à la fois. Après chaque modification : enregistre, puis <b>Déployer</b>, <b>Gérer les déploiements</b>, crayon, <b>Nouvelle version</b>, <b>Déployer</b>, et recharge la page. Sans cela, tu testes l’ancienne version.</p>',copy:{label:'Modèle de demande de modification',text:MESSAGES.modif},fig:'script_newversion'}
+   ],
+   ctrl:'Point de contrôle : ton application s’affiche, les chiffres sont justes et tu as publié au moins une nouvelle version.',
+   help:[['Claude ne donne qu’un extrait','Écris : « Je ne suis pas développeur : donne-moi le fichier complet, prêt à coller. »'],['Erreur en rouge à l’enregistrement','Copie le message, colle-le dans le projet et demande : « Que signifie cette erreur et que dois-je faire ? »'],['La page est blanche','Vérifie que le fichier HTML s’appelle bien comme le code l’attend (Index) et regarde le journal d’exécution en bas de l’éditeur.'],['La page n’affiche aucune donnée','Vérifie que les onglets s’appellent exactement Demandes et Paramètres, et que les données commencent à la ligne 2.'],['Ma modification n’apparaît pas','Tu n’as pas publié de nouvelle version : refais Déployer, Gérer les déploiements, crayon, Nouvelle version.']]};
+}
+function copyBlock(c){return `<div class="copy"><header><span>${esc(c.label)}</span><button class="btn small" data-act="copy" data-text="${esc(encodeURIComponent(c.text))}">Copier</button></header><pre>${esc(c.text)}</pre></div>`;}
+function renderMission(st){
+  const m=st.id==='m4'?buildM4():MISSIONS[st.id];const a=A(st.id);a.checks=a.checks||{};
+  const all=m.steps.every(s=>a.checks[s.id])&&a.checks.ctrl;
+  const items=m.steps.map((s,i)=>`<li class="${a.checks[s.id]?'checked':''}"><label><input type="checkbox" data-act="chk" data-step="${st.id}" data-val="${s.id}" ${a.checks[s.id]?'checked':''}><span>${i+1}. ${esc(s.t)}</span></label><div class="detail">${s.d}${s.link?`<p><a class="btn small" href="${s.link.u}" target="_blank" rel="noopener">${esc(s.link.t)}</a></p>`:''}</div>${s.copy?copyBlock(s.copy):''}${s.fig?figureHtml(s.fig):''}</li>`).join('');
+  const help=m.help&&m.help.length?`<details><summary>Si ça bloque</summary><table class="simple"><tr><th>Ce que tu observes</th><th>Ce que tu peux essayer</th></tr>${m.help.map(h=>`<tr><td>${esc(h[0])}</td><td>${esc(h[1])}</td></tr>`).join('')}</table></details>`:'';
+  return `${chipsFor(st)}<h1>${esc(m.title)}</h1><p class="lead">${esc(m.intro)}</p><p class="hint">Durée indicative : ${esc(m.time)}.</p>
+  <ul class="todo">${items}<li class="${a.checks.ctrl?'checked':''}"><label><input type="checkbox" data-act="chk" data-step="${st.id}" data-val="ctrl" ${a.checks.ctrl?'checked':''}><span>${esc(m.ctrl)}</span></label></li></ul>${help}
+  ${all?'<div class="box ok"><p><b>Mission terminée.</b> Tu peux passer à l’étape suivante.</p></div>':''}${navBar(st,D)}`;
+}
+
+/* ----- choix simples : périmètre et scènes ----- */
+function renderChoice(st,cfg){
+  const a=A(st.id),locked=!!a.done;
+  const opts=cfg.opts.map(o=>`<button class="opt" data-act="pick1" data-step="${st.id}" data-val="${o.id}" aria-pressed="${a.choice===o.id}"><span class="rad"></span><span><strong>${esc(o.t)}</strong><span class="d">${esc(o.d)}</span></span></button>`).join('');
+  const chosen=cfg.opts.find(o=>o.id===a.choice);
+  const after=locked&&chosen?`<div class="box ok"><h3>Conséquence de ton choix</h3><p>${esc(chosen.csq)}</p>${deltaChips(D.per[st.id])}</div>`:'';
+  return `${chipsFor(st)}<h1>${esc(cfg.title)}</h1>${cfg.intro?`<p class="lead">${esc(cfg.intro)}</p>`:''}${objLine(cfg.obj)}
+  <div class="q">${esc(cfg.q)}</div><div class="opts ${locked?'locked':''}">${opts}</div>
+  ${justifBox(st,a,locked,cfg.jl,cfg.min)}${after}${locked?navBar(st,D):commitZone(st,false)}`;
+}
+
+/* ----- usages ----- */
+function renderUsages(st){
+  const a=A(st.id),locked=!!a.done,p=(a.pick=a.pick||{});
+  const all=usagesList(),ul=st.mode==='human'?all.filter(retained):all;
+  const per=PERIMETRES.find(x=>x.id===perimetreId());
+  let head='',intro='';
+  if(st.mode==='adopt'){head='Ce que l’IA change dans : '+per.t;intro='Voici quatre usages que des fournisseurs te proposent. Pour chacun, décide : adopter, tester en pilote ou refuser. Lis ce que l’IA apporte et ce qui reste humain.';}
+  if(st.mode==='human'){head='Qui décide vraiment ?';intro='Pour chaque usage retenu, choisis qui prend la décision finale. Le mode de décision change tes risques et ta conformité.';}
+  if(st.mode==='qualif'){head='Qualifier chaque usage selon l’AI Act';intro='Interdit, haut risque, risque limité ou risque minimal ? Explore les textes, puis réponds sans regarder la correction. Elle s’affiche après ta validation.';}
+  let body='';
+  if(!ul.length&&st.mode==='human')body='<div class="box"><p>Tu n’as retenu aucun usage : il n’y a rien à répartir. Passe à l’étape suivante.</p></div>';
+  ul.forEach(u=>{
+    let ctrl='',ver='';
+    if(st.mode==='adopt')ctrl=USAGE_CHOICES.map(c=>`<button data-act="pickU" data-step="${st.id}" data-key="${u.id}" data-val="${c.id}" aria-pressed="${p[u.id]===c.id}">${c.t}</button>`).join('');
+    if(st.mode==='human')ctrl=HUMAN_MODES.map(c=>`<button data-act="pickU" data-step="${st.id}" data-key="${u.id}" data-val="${c.id}" aria-pressed="${p[u.id]===c.id}" title="${esc(c.d)}">${c.t}</button>`).join('');
+    if(st.mode==='qualif')ctrl=QUALIF_LEVELS.map(c=>`<button data-act="pickU" data-step="${st.id}" data-key="${u.id}" data-val="${c.id}" aria-pressed="${p[u.id]===c.id}">${c.t}</button>`).join('');
+    if(locked&&st.mode==='qualif'){const ok=p[u.id]===u.ref;ver=`<div class="verdict ${ok?'ok':'no'}"><b>${ok?'Ta qualification est cohérente.':'Écart avec la référence.'}</b> Référence : ${REFS[u.ref]}. ${esc(u.why)}${u.nuance?' '+esc(u.nuance):''}</div>`;}
+    if(locked&&st.mode==='adopt'&&p[u.id]==='adopt'&&u.ref==='interdit')ver=`<div class="verdict no">Tu as adopté un usage qui déduit des émotions au travail. Tu verras ce que cela implique plus loin.</div>`;
+    const modeHelp=st.mode==='human'?`<div class="two" style="grid-template-columns:1fr"><div><b>Rappel</b> : ${HUMAN_MODES.map(m=>`<b>${m.t}</b> (${m.d})`).join(' ; ')}</div></div>`:'';
+    body+=`<div class="usage ${locked?'locked':''}"><h3>${esc(u.t)}</h3><p>${esc(u.s)}</p>${st.mode!=='qualif'?`<div class="two"><div><b>Ce que l’IA apporte</b><br>${esc(u.gain)}</div><div><b>Ce qui reste humain</b><br>${esc(u.humain)}</div></div>`:''}${st.mode==='human'&&u===ul[0]?modeHelp:''}<div class="seg" role="group" aria-label="Ta décision pour ${esc(u.t)}">${ctrl}</div>${ver}</div>`;
+  });
+  const exp=st.mode==='qualif'?exploreBox(st,a,locked,['aiact','omnibus','cnilia'],2):'';
+  const jl={adopt:'Qu’est-ce qui t’a fait pencher, et qu’as-tu pesé ?',human:'Pourquoi ces niveaux de décision humaine ?',qualif:'Qu’as-tu appris dans les textes ? Cite un article.'}[st.mode];
+  const calendrier=st.mode==='qualif'&&locked?`<div class="box info"><h3>Calendrier à retenir (à vérifier sur les textes)</h3><ul><li>Pratiques interdites (article 5) : depuis le 2 février 2025.</li><li>Maîtrise de l’IA (article 4) : depuis le 2 février 2025.</li><li>Transparence (article 50) : depuis le 2 août 2026.</li><li>Obligations « haut risque » de l’annexe III, dont l’emploi : 2 décembre 2027, après le règlement (UE) 2026/1744.</li></ul></div>`:'';
+  const after=locked?`<div class="box ok"><h3>Effets sur tes indicateurs</h3>${deltaChips(D.per[st.id])}</div>`:'';
+  const noItems=st.mode==='human'&&!ul.length;
+  return `${chipsFor(st)}<h1>${esc(head)}</h1><p class="lead">${esc(intro)}</p>${objLine(st.obj)}${exp}${body}${noItems?'':justifBox(st,a,locked,jl,JUST[st.mode])}${calendrier}${after}${locked?navBar(st,D):(noItems?autoPass(st):commitZone(st,false))}`;
+}
+function autoPass(st){return `<div class="nav"><span></span><button class="btn primary" data-act="commit" data-step="${st.id}">Passer à la suite</button></div>`;}
+
+/* ----- garde-fous ----- */
+function renderGarde(st){
+  const a=A(st.id),locked=!!a.done,p=(a.pick=a.pick||{});
+  let body='';
+  GARDE.forEach(g=>{
+    const opts=g.opts.map(o=>`<button class="opt" data-act="pickG" data-step="${st.id}" data-key="${g.id}" data-val="${o.id}" aria-pressed="${p[g.id]===o.id}"><span class="rad"></span><span><strong>${esc(o.t)}</strong><span class="d">${esc(o.d)}</span></span></button>`).join('');
+    const ch=g.opts.find(o=>o.id===p[g.id]);
+    body+=`<div class="q">${esc(g.q)}</div><div class="opts ${locked?'locked':''}">${opts}</div>${locked&&ch?`<div class="verdict ok"><b>Conséquence.</b> ${esc(ch.csq)}</div>`:''}`;
+  });
+  const after=locked?`<div class="box ok"><h3>Effets sur tes indicateurs</h3>${deltaChips(D.per[st.id])}<p class="hint">Selon tes choix, de nouvelles étapes peuvent apparaître : incident, demande du CSE, écart de traitement.</p></div>`:'';
+  return `${chipsFor(st)}<h1>Données, biais, transparence, CSE</h1><p class="lead">Quatre décisions de gouvernance. Elles ne se voient pas dans l’outil, mais elles déterminent ce qui t’arrivera ensuite.</p>${objLine(4)}
+  ${exploreBox(st,a,locked,['rgpd','cnilia','travail','ddd','aiact'],2)}${body}${justifBox(st,a,locked,'Qu’as-tu appris des textes, et pourquoi ces quatre choix ?',JUST.garde)}${after}${locked?navBar(st,D):commitZone(st,false)}`;
+}
+
+/* ----- feuille de route ----- */
+function roadmapActions(){return ACTIONS.filter(ac=>!ac.cond||ac.cond(D.flags));}
+function roadmapChecks(a){
+  const acts=roadmapActions(),p=a.pick||{};const out=[];
+  const unplaced=acts.filter(ac=>!p[ac.id]).length;
+  out.push({ok:unplaced===0,t:unplaced?`Il reste ${unplaced} action${unplaced>1?'s':''} à placer.`:'Toutes les actions sont placées.'});
+  acts.filter(ac=>ac.must).forEach(ac=>{const h=p[ac.id];const ok=ac.must==='t1'?h==='t1':(h==='t1'||h==='t2');out.push({ok,t:`« ${ac.t.slice(0,60)}${ac.t.length>60?'…':''} » : ${ac.must==='t1'?'à placer entre 0 et 3 mois':'à placer avant 12 mois'}.`});});
+  const kept=acts.filter(ac=>p[ac.id]&&p[ac.id]!=='no').length;
+  out.push({ok:kept>=6,t:`Au moins 6 actions retenues (${kept} pour l’instant).`});
+  NEED_CATS.forEach(n=>{const ok=acts.some(ac=>ac.cat===n.cat&&p[ac.id]&&p[ac.id]!=='no');out.push({ok,t:`Retiens ${n.msg}.`});});
+  return out;
+}
+function renderRoadmap(st){
+  const a=A(st.id),locked=!!a.done,p=(a.pick=a.pick||{});
+  const acts=roadmapActions();
+  const rows=acts.map(ac=>{
+    const must=ac.must?`<p class="hint"><b>Obligatoire dans ton chemin.</b> ${esc(ac.why)}</p>`:'';
+    return `<div class="act ${ac.must?'must':''} ${locked?'locked':''}"><div class="cat">${esc(ac.cat)}</div><div class="t">${esc(ac.t)}</div>${must}<div class="seg" role="group" aria-label="Horizon de : ${esc(ac.t)}">${HORIZONS.map(h=>`<button data-act="hz" data-step="${st.id}" data-key="${ac.id}" data-val="${h.id}" aria-pressed="${p[ac.id]===h.id}">${h.t}</button>`).join('')}</div></div>`;}).join('');
+  const checks=roadmapChecks(a);
+  const list=`<ul class="checks" id="rmchecks">${checks.map(c=>`<li class="${c.ok?'ok':''}">${esc(c.t)}</li>`).join('')}</ul>`;
+  const after=locked?`<div class="box ok"><h3>Effets de ta feuille de route</h3>${deltaChips(D.per[st.id])}<p class="hint">Les actions placées tôt pèsent plus que les actions lointaines.</p></div>`:'';
+  return `${chipsFor(st)}<h1>Construis ta feuille de route</h1><p class="lead">Place chaque action dans le temps. Certaines sont obligatoires à cause de tes choix précédents. Tiens compte de la sobriété numérique, de l’accompagnement social et de la qualité de vie et des conditions de travail.</p>${objLine(5)}
+  <div class="box"><h3>Ce que ta feuille de route doit montrer</h3>${list}</div>${rows}${justifBox(st,a,locked,'Pourquoi cet ordre ? Qu’est-ce qui ne peut pas attendre ?',JUST.roadmap)}${after}${locked?navBar(st,D):commitZone(st,false,'Valider ma feuille de route')}`;
+}
+
+/* ----- synthèse ----- */
+const SYN_FIELDS=[
+ {k:'diag',t:'Mon diagnostic en quelques phrases',min:40,ph:'Sur mon périmètre, l’IA apporte… mais…'},
+ {k:'opp',t:'Les opportunités que je retiens, et pourquoi',min:25,ph:''},
+ {k:'risk',t:'Les risques que je traite en priorité, et comment',min:25,ph:''},
+ {k:'hum',t:'Ce qui reste une décision humaine',min:20,ph:''},
+ {k:'learn',t:'Ce que mes décisions m’ont appris, et ce que je ferais autrement',min:25,ph:''}
+];
+function pathSummary(){
+  const f=D.flags,ul=usagesList(),a2=S.ans.d2&&S.ans.d2.pick||{};
+  const opp=ul.filter(u=>a2[u.id]==='adopt'||a2[u.id]==='pilote').map(u=>`${u.t} (${a2[u.id]==='pilote'?'pilote':'adopté'}) : ${u.gain}`);
+  const risk=[];
+  ul.forEach(u=>{if(retained(u)&&u.ref==='interdit')risk.push(`${u.t} : pratique interdite retenue.`);if(retained(u)&&u.ref==='haut')risk.push(`${u.t} : usage à haut risque, obligations à partir du 2 décembre 2027.`);});
+  if(f.has('data:reelles'))risk.push('Données réelles dans un outil grand public.');
+  if(f.has('biais:aucun'))risk.push('Aucune vérification des biais.');
+  if(f.has('transp:rien')||f.has('transp:interne'))risk.push('Information des personnes insuffisante.');
+  if(f.has('cse:apres')||f.has('cse:non'))risk.push('Consultation du CSE tardive ou absente.');
+  if(f.has('sanction'))risk.push('Au moins une décision qui expose à une sanction.');
+  const hum=ul.map(u=>`${u.t} : ${u.humain}`);
+  return {opp,risk,hum};
+}
+function renderSynthese(st){
+  const a=A(st.id);a.fields=a.fields||{};const sm=pathSummary();
+  const li=arr=>arr.length?'<ul>'+arr.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>':'<p class="hint">Rien à signaler.</p>';
+  const fields=SYN_FIELDS.map(f=>{const v=a.fields[f.k]||'';const n=wc(v);return `<div class="field"><label for="f-${f.k}">${esc(f.t)}</label><textarea id="f-${f.k}" data-field="syn" data-key="${f.k}" data-step="${st.id}" placeholder="${esc(f.ph)}">${esc(v)}</textarea><div class="count ${n>=f.min?'ok':''}" id="cf-${f.k}">${n} mot${n>1?'s':''} sur ${f.min} au minimum</div></div>`;}).join('');
+  const notTaken=[];
+  STEPS.forEach(s2=>{const x=S.ans[s2.id];if(!x||!x.done)return;
+    if(s2.kind==='scene'){const sc=sceneOf(s2);sc.opts.filter(o=>o.id!==x.choice).forEach(o=>notTaken.push([sc.t,o.t,o.csq]));}
+    if(s2.kind==='garde'){GARDE.forEach(g=>g.opts.filter(o=>o.id!==(x.pick||{})[g.id]).forEach(o=>notTaken.push([g.q,o.t,o.csq])));}
+    if(s2.kind==='perimetre'){PERIMETRES.filter(q=>q.id!==x.choice).forEach(q=>notTaken.push(['Périmètre',q.t,q.enjeu]));}
+  });
+  const ind=D.ind;
+  const verdict=(()=>{const l=ind.legal,c=ind.conf;if(l>=70&&c>=65)return ['ok','Ton chemin est solide : le cadre légal et la confiance tiennent. Prépare-toi à défendre ce que tu as sacrifié en gain attendu.'];if(l>=45)return ['warn','Ton chemin est fragile : des décisions te exposent. Sois prêt(e) à dire lesquelles tu corrigerais en premier.'];return ['bad','Ton chemin expose fortement l’organisation. Défends ce diagnostic en expliquant comment tu sortirais de cette situation.'];})();
+  return `${chipsFor(st)}<h1>Diagnostic et défense</h1><p class="lead">Tu présentes ce que ton chemin révèle : opportunités, risques, plan d’action. Les blocs ci-dessous viennent de tes décisions. Tu les complètes avec tes mots.</p>${objLine(6)}
+  <div class="box ${verdict[0]}"><h3>Lecture de ton chemin</h3><p>${esc(verdict[1])}</p></div>
+  <div class="box"><h3>Ce que ton parcours met en évidence</h3><h4>Opportunités</h4>${li(sm.opp)}<h4>Risques</h4>${li(sm.risk)}<h4>Ce qui reste humain</h4>${li(sm.hum)}</div>
+  ${fields}
+  <details><summary>Chemins non pris (ce qui se serait passé)</summary><table class="simple"><tr><th>Décision</th><th>Option non retenue</th><th>Conséquence</th></tr>${notTaken.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join('')}</table></details>
+  <div class="box info"><h3>Ta défense orale en 3 minutes</h3><ol><li>Ton périmètre et son enjeu (30 secondes).</li><li>Deux opportunités que tu retiens (45 secondes).</li><li>Deux risques et ta réponse (1 minute).</li><li>Ton plan en trois horizons (30 secondes).</li><li>Ce qui reste une décision humaine (15 secondes).</li></ol></div>
+  <div class="nav"><button class="btn" data-act="exportJson">Enregistrer le fichier de projet</button><button class="btn primary" data-act="exportPdf">Exporter en PDF</button></div>
+  ${a.done?'<div class="box ok"><p><b>Diagnostic validé.</b> Exporte tes fichiers pour les déposer sur le LMS.</p></div>':commitZone(st,false,'Valider mon diagnostic')}${navBar(st,D)}`;
+}
+
+/* ----- rendu général ----- */
+function renderStage(){
+  const st=stepById(S.cur);let h='';
+  if(st.kind==='accueil')h=renderAccueil(st);
+  else if(st.kind==='mission')h=renderMission(st);
+  else if(st.kind==='perimetre')h=renderChoice(st,{title:'Choisis ton périmètre RH',intro:'Ton diagnostic final portera sur un seul périmètre. Ce choix décide des usages que tu devras analyser : deux périmètres, deux chemins différents.',q:'Sur quel périmètre veux-tu travailler ?',opts:PERIMETRES.map(q=>({id:q.id,t:q.t,d:q.d+' '+q.enjeu,csq:q.enjeu})),jl:'Pourquoi ce périmètre ? Qu’espères-tu y comprendre ?',min:JUST.perimetre});
+  else if(st.kind==='scene'){const sc=sceneOf(st);h=renderChoice(st,{title:sc.t,intro:sc.intro,q:sc.q,opts:sc.opts,jl:'Pourquoi cette décision ?',min:JUST.scene,obj:sc.obj});}
+  else if(st.kind==='usages')h=renderUsages(st);
+  else if(st.kind==='garde')h=renderGarde(st);
+  else if(st.kind==='roadmap')h=renderRoadmap(st);
+  else if(st.kind==='synthese')h=renderSynthese(st);
+  const el=$('#stage');el.innerHTML=fr(`<div class="card ${isDone(st)&&st.kind!=='mission'&&st.kind!=='synthese'?'locked':''}">${h}</div>`);
+}
+function renderRail(){
+  const vis=D.visible,open=openableIndex(vis);
+  $('#rail-list').innerHTML=fr(CHAPS.map(c=>{
+    const items=vis.map((s,i)=>({s,i})).filter(x=>x.s.chap===c.id);
+    if(!items.length)return '';
+    return `<div class="chap"><div class="chap-title">${esc(c.t)}</div><ol>${items.map(({s,i})=>{
+      const done=isDone(s),cur=s.id===S.cur,locked=i>open;
+      const cls=done?'done':(s.scene&&!locked?'new':'');
+      return `<li><button class="step-link" data-act="goto" data-step="${s.id}" ${cur?'aria-current="step"':''} ${locked?'disabled':''}><span class="dot ${cls}"></span><span>${esc(titleOf(s))}</span></button></li>`;}).join('')}</ol></div>`;}).join(''));
+}
+function laneOf(st,a){
+  if(st.kind==='perimetre')return Math.max(0,PERIMETRES.findIndex(q=>q.id===a.choice));
+  if(st.kind==='scene')return Math.max(0,sceneOf(st).opts.findIndex(o=>o.id===a.choice));
+  if(st.kind==='usages'){const p=a.pick||{};const ul=usagesList();if(st.mode==='adopt')return Math.min(3,ul.filter(u=>p[u.id]==='adopt'||p[u.id]==='pilote').length);if(st.mode==='human'){const rank={propose:0,controle:1,seule:2};return Math.max(0,...Object.values(p).map(v=>rank[v]||0));}return Math.min(3,ul.filter(u=>p[u.id]&&p[u.id]!==u.ref).length);}
+  if(st.kind==='garde'){const p=a.pick||{};let s=0;GARDE.forEach(g=>{s+=Math.max(0,g.opts.findIndex(o=>o.id===p[g.id]));});return Math.min(3,Math.round(s/2));}
+  if(st.kind==='roadmap'){const p=a.pick||{};return Math.min(3,Object.values(p).filter(v=>v==='t1').length>5?0:Object.values(p).filter(v=>v==='no').length>3?3:1);}
+  return 1;
+}
+function renderPath(){
+  const nodes=D.visible.filter(s=>['perimetre','usages','garde','scene','roadmap'].includes(s.kind));
+  const W=Math.max(300,nodes.length*40+24),H=104;let pts=[],dots='';
+  nodes.forEach((s,i)=>{const a=S.ans[s.id];const x=22+i*40;
+    if(a&&a.done){const y=18+laneOf(s,a)*22;const f=D.per[s.id]||{};const net=Object.values(f).reduce((q,v)=>q+v,0);const col=net>=4?'#059669':net<=-8?'#B91C1C':'#B45309';pts.push([x,y]);dots+=`<circle cx="${x}" cy="${y}" r="7" fill="${col}"><title>${esc(titleOf(s))}</title></circle>`;}
+    else dots+=`<circle cx="${x}" cy="52" r="6" fill="#fff" stroke="#CBD5E1" stroke-width="2"><title>${esc(titleOf(s))} (à venir)</title></circle>`;});
+  const line=pts.length>1?`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#94A3B8" stroke-width="2.5" stroke-linejoin="round"/>`:'';
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Carte de ton chemin : chaque point est une décision, sa hauteur dépend de ton choix">${line}${dots}</svg>`;
+}
+function renderDash(){
+  const g=IND.map(i=>{const v=D.ind[i.k];const c=v>=60?'':v>=40?'mid':'low';return `<div class="gauge" title="${esc(i.d)}"><div class="lab">${esc(i.t)} <span>${v}/100</span></div><div class="track"><div class="fill ${c}" style="width:${v}%"></div></div></div>`;}).join('');
+  const j=[];STEPS.forEach(s=>{const a=S.ans[s.id];if(!a||!a.done||s.kind==='mission'||s.kind==='accueil')return;j.push({s,a});});
+  const jr=j.slice().reverse().map(({s,a})=>{let sum='';
+    if(s.kind==='perimetre')sum=(PERIMETRES.find(q=>q.id===a.choice)||{}).t;
+    else if(s.kind==='scene')sum=(sceneOf(s).opts.find(o=>o.id===a.choice)||{}).t;
+    else if(s.kind==='usages'){const c=Object.values(a.pick||{});sum=s.mode==='adopt'?`${c.filter(x=>x==='adopt').length} adopté(s), ${c.filter(x=>x==='pilote').length} en pilote, ${c.filter(x=>x==='refuse').length} refusé(s)`:s.mode==='human'?'Modes de décision choisis':'Qualifications saisies';}
+    else if(s.kind==='garde')sum='Quatre garde-fous fixés';else if(s.kind==='roadmap')sum='Feuille de route validée';else sum='Diagnostic validé';
+    return `<li><b>${esc(titleOf(s))}</b>${esc(sum||'')}</li>`;}).join('');
+  $('#dash').innerHTML=fr(`<section><h2>Tes indicateurs</h2>${g}<p class="hint">Chaque décision les fait bouger. Passe la souris sur un titre pour lire sa définition.</p></section><section><h2>Ton chemin</h2><div class="path">${renderPath()}</div><p class="hint">Chaque point est une décision. Sa hauteur dépend de ton choix : un autre choix, un autre tracé.</p></section><section><h2>Journal de tes décisions</h2>${jr?`<ul class="journal">${jr}</ul>`:'<p class="hint">Tes décisions apparaîtront ici.</p>'}</section>`);
+}
+function renderBar(){
+  const jt=fmtTime(S.meta.lastJson),pt=fmtTime(S.meta.lastPdf);
+  const warn=S.meta.changes>0;
+  $('#status').innerHTML=fr(`<span>${storageOK?'Enregistré sur cet appareil à <b>'+(fmtTime(S.meta.updated)||'')+'</b>':'<span class="warn">Stockage du navigateur indisponible : exporte un fichier.</span>'}</span><span>Fichier de projet : ${jt?'<b>'+jt+'</b>':'<span class="warn">jamais enregistré</span>'}${warn&&jt?' <span class="warn">('+S.meta.changes+' changement'+(S.meta.changes>1?'s':'')+' depuis)</span>':''}</span><span>PDF : ${pt?'<b>'+pt+'</b>':'jamais'}</span>`);
+}
+function render(){
+  D=derive();
+  if(!D.visible.find(s=>s.id===S.cur))S.cur=D.visible[0].id;
+  renderBar();renderRail();renderStage();renderDash();persist();
+}
+function go(id){S.cur=id;render();window.scrollTo({top:0});}
+
+/* ===== Actions, exports, raccourcis ===== */
+const IS_MAC=/Mac|iPhone|iPad/.test(navigator.platform||'');
+function rerender(){const y=window.scrollY;render();window.scrollTo(0,y);}
+
+function ask(title,body,buttons){
+  return new Promise(res=>{
+    const d=$('#dlg');
+    d.innerHTML=fr(`<h2>${esc(title)}</h2><p>${esc(body)}</p><div class="nav">${buttons.map((b,i)=>`<button class="btn ${b.cls||''}" data-v="${i}">${esc(b.t)}</button>`).join('')}</div>`);
+    const onClick=e=>{const b=e.target.closest('button[data-v]');if(!b)return;d.removeEventListener('click',onClick);d.close();res(buttons[+b.dataset.v].v);};
+    d.addEventListener('click',onClick);
+    d.addEventListener('cancel',()=>{d.removeEventListener('click',onClick);res(null);},{once:true});
+    if(d.showModal)d.showModal();else d.setAttribute('open','');
+  });
+}
+
+function copyText(text,btn){
+  const done=()=>{if(btn){const o=btn.textContent;btn.textContent='Copié';setTimeout(()=>btn.textContent=o,1600);}toast('Texte copié : colle-le avec Ctrl+V.');};
+  if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(text).then(done,()=>fallback());}else fallback();
+  function fallback(){const t=document.createElement('textarea');t.value=text;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();try{document.execCommand('copy');done();}catch(e){toast('Copie impossible : sélectionne le texte à la main.');}t.remove();}
+}
+
+/* ----- fichier de projet (.json) ----- */
+function fileBase(){
+  const p=((A('accueil').pseudo||'projet')+'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'projet';
+  return `budget-formation-${p}-${new Date().toISOString().slice(0,10)}`;
+}
+function exportJson(){
+  S.meta.lastJson=Date.now();S.meta.changes=0;persist();
+  const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fileBase()+'.json';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+  render();toast('Fichier de projet enregistré dans tes téléchargements.');
+}
+function importJson(file){
+  const r=new FileReader();
+  r.onload=async()=>{
+    let o;try{o=JSON.parse(r.result);}catch(e){toast('Ce fichier n’est pas lisible.');return;}
+    if(!o||o.app!==APPID||!o.ans||typeof o.v!=='number'){toast('Ce fichier n’est pas un projet de ce parcours.');return;}
+    if(o.v>VERSION){toast('Ce fichier vient d’une version plus récente de la page.');return;}
+    const hasWork=Object.keys(S.ans).length>1;
+    if(hasWork){const c=await ask('Remplacer le projet en cours ?','Le projet de cet appareil sera remplacé par celui du fichier. Enregistre-le d’abord si tu veux le garder.',[{t:'Annuler',v:'no'},{t:'Remplacer',v:'yes',cls:'primary'}]);if(c!=='yes')return;}
+    o.meta=Object.assign({created:Date.now(),updated:Date.now(),lastJson:0,lastPdf:0,changes:0},o.meta||{});o.cur=o.cur||'accueil';
+    S=o;render();toast('Projet chargé.');
+  };
+  r.readAsText(file);
+}
+async function newProject(){
+  const c=await ask('Nouveau projet','Ton travail actuel sera effacé de cet appareil. Enregistre d’abord un fichier de projet si tu veux le garder.',[{t:'Annuler',v:'no'},{t:'Enregistrer le fichier d’abord',v:'save'},{t:'Effacer et recommencer',v:'new',cls:'primary'}]);
+  if(c==='save')exportJson();
+  if(c==='new'){S=fresh();render();window.scrollTo(0,0);toast('Nouveau projet créé.');}
+}
+
+/* ----- rapport PDF (via la fenêtre d'impression du navigateur) ----- */
+function describe(st,a){
+  const out={choix:'',csq:'',extra:''};
+  if(st.kind==='perimetre'){const q=PERIMETRES.find(x=>x.id===a.choice);out.choix=q?q.t:'';out.csq=q?q.enjeu:'';}
+  else if(st.kind==='scene'){const o=sceneOf(st).opts.find(x=>x.id===a.choice);out.choix=o?o.t:'';out.csq=o?o.csq:'';}
+  else if(st.kind==='garde'){out.extra='<ul>'+GARDE.map(g=>{const o=g.opts.find(x=>x.id===(a.pick||{})[g.id]);return `<li><b>${esc(g.q)}</b> ${esc(o?o.t:'')}. ${esc(o?o.csq:'')}</li>`;}).join('')+'</ul>';}
+  else if(st.kind==='usages'){
+    const ul=usagesList();
+    if(st.mode==='adopt')out.extra='<ul>'+ul.map(u=>`<li><b>${esc(u.t)}</b> : ${esc((USAGE_CHOICES.find(c=>c.id===(a.pick||{})[u.id])||{}).t||'')}</li>`).join('')+'</ul>';
+    if(st.mode==='human')out.extra='<ul>'+ul.filter(u=>(a.pick||{})[u.id]).map(u=>`<li><b>${esc(u.t)}</b> : ${esc((HUMAN_MODES.find(c=>c.id===a.pick[u.id])||{}).t||'')}</li>`).join('')+'</ul>';
+    if(st.mode==='qualif')out.extra='<table><tr><th>Usage</th><th>Ma qualification</th><th>Référence</th><th>Explication</th></tr>'+ul.map(u=>{const m=(QUALIF_LEVELS.find(c=>c.id===(a.pick||{})[u.id])||{}).t||'';return `<tr><td>${esc(u.t)}</td><td>${esc(m)}</td><td>${esc(REFS[u.ref])}</td><td>${esc(u.why)}</td></tr>`;}).join('')+'</table>';
+  }
+  else if(st.kind==='roadmap'){
+    out.extra=HORIZONS.map(h=>{const l=roadmapActions().filter(ac=>(a.pick||{})[ac.id]===h.id);return `<h3>${esc(h.t)}</h3>${l.length?'<ul>'+l.map(ac=>`<li>${esc(ac.cat)} : ${esc(ac.t)}</li>`).join('')+'</ul>':'<p>Aucune action.</p>'}`;}).join('');
+  }
+  return out;
+}
+function buildReport(){
+  D=derive();
+  const a0=A('accueil'),per=PERIMETRES.find(q=>q.id===perimetreId());
+  const date=new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  let h=`<h1>Budget formation : mon parcours</h1><p><b>${esc(a0.pseudo||'Sans pseudo')}</b>. Exporté le ${esc(date)}.</p><p>Périmètre RH : <b>${esc(per?per.t:'non choisi')}</b>.</p>`;
+  h+=`<h2>Mes indicateurs</h2><table>${IND.map(i=>`<tr><td>${esc(i.t)}</td><td>${D.ind[i.k]} sur 100</td><td><span class="bar-i" style="width:${D.ind[i.k]*1.4}px"></span></td></tr>`).join('')}</table>`;
+  h+='<h2>Mes décisions</h2>';
+  D.visible.forEach(st=>{const a=S.ans[st.id];if(!a||!a.done||['accueil','mission'].includes(st.kind))return;
+    const d=describe(st,a);
+    h+=`<div class="blk"><h3>${esc(titleOf(st))}${st.obj||st.scene?` (objectif ${st.obj||sceneOf(st).obj})`:''}</h3>`;
+    if(d.choix)h+=`<p><b>Mon choix :</b> ${esc(d.choix)}</p>`;
+    if(d.csq)h+=`<p><b>Conséquence :</b> ${esc(d.csq)}</p>`;
+    h+=d.extra;
+    if(a.justif)h+=`<p><b>Ma justification :</b> ${esc(a.justif)}</p>`;
+    const f=D.per[st.id];if(f&&st.kind!=='perimetre')h+=`<p><b>Effets :</b> ${IND.map(i=>`${SHORT[i.k]} ${Math.round(f[i.k]||0)>0?'+':''}${Math.round(f[i.k]||0)}`).join(' ; ')}</p>`;
+    h+='</div>';});
+  const used=new Set();['d4','d5'].forEach(id=>{(S.ans[id]&&S.ans[id].sources||[]).forEach(x=>used.add(x));});
+  if(used.size)h+=`<h2>Sources que j’ai consultées</h2><ul>${[...used].map(id=>`<li>${esc(SRC[id].t)} : ${esc(SRC[id].u)}</li>`).join('')}</ul>`;
+  const syn=S.ans.d7&&S.ans.d7.fields||{};
+  if(Object.keys(syn).length){h+='<h2>Mon diagnostic</h2>'+SYN_FIELDS.map(f=>`<div class="blk"><h3>${esc(f.t)}</h3><p>${esc(syn[f.k]||'')}</p></div>`).join('');}
+  const rules=rulesFromPath(D.flags);
+  h+=`<h2>Règles de gestion pour mon application</h2><ul>${rules.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>`;
+  h+=`<h2>Pour reprendre ce travail</h2><p>Ouvre la page du parcours, clique sur « Ouvrir » et choisis le fichier de projet (.json) enregistré avec ce rapport. Ce PDF se lit mais ne se recharge pas.</p><p><i>Parcours pédagogique. Données fictives uniquement. Les références juridiques sont des synthèses : vérifie-les sur les textes officiels.</i></p>`;
+  return h;
+}
+function exportPdf(){
+  const root=$('#print-root');root.innerHTML=fr(buildReport());
+  const old=document.title;document.title=fileBase();
+  S.meta.lastPdf=Date.now();persist();
+  const after=()=>{document.title=old;root.innerHTML='';window.removeEventListener('afterprint',after);render();};
+  window.addEventListener('afterprint',after);
+  toast('Dans la fenêtre qui s’ouvre, choisis « Enregistrer au format PDF ».');
+  setTimeout(()=>window.print(),350);
+}
+
+/* ----- évènements ----- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const act=b.dataset.act,sid=b.dataset.step,st=sid?stepById(sid):null,a=sid?A(sid):null;
+  if(act==='goto'){if(!b.disabled)go(sid);}
+  else if(act==='pick1'){if(a.done)return;a.choice=b.dataset.val;rerender();}
+  else if(act==='pickU'||act==='pickG'||act==='hz'){if(a.done)return;a.pick=a.pick||{};a.pick[b.dataset.key]=b.dataset.val;rerender();}
+  else if(act==='commit'){
+    if(a.done)return;if(unmet(st).length)return;
+    a.done=true;a.ts=Date.now();S.meta.changes++;
+    if(st.kind==='accueil'){const vis=derive().visible;S.cur=vis[1].id;render();window.scrollTo(0,0);}
+    else{render();window.scrollTo(0,0);toast('Décision validée. Pense à enregistrer ton fichier (Ctrl + S).');}
+  }
+  else if(act==='copy'){copyText(decodeURIComponent(b.dataset.text),b);}
+  else if(act==='open'){$('#file').click();}
+  else if(act==='exportJson'){exportJson();}
+  else if(act==='exportPdf'){exportPdf();}
+  else if(act==='new'){newProject();}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;if(t.id==='file'){if(t.files[0])importJson(t.files[0]);t.value='';return;}
+  const act=t.dataset&&t.dataset.act;if(!act)return;
+  const a=A(t.dataset.step);
+  if(act==='chk'){
+    a.checks=a.checks||{};a.checks[t.dataset.val]=t.checked;
+    const st=stepById(t.dataset.step);const m=st.id==='m4'?buildM4():MISSIONS[st.id];
+    if(!a.done&&m.steps.every(s=>a.checks[s.id])&&a.checks.ctrl){a.done=true;S.meta.changes++;toast('Mission terminée.');}
+    rerender();
+  }
+  else if(act==='src'){if(a.done)return;a.sources=a.sources||[];const v=t.dataset.val;a.sources=t.checked?[...new Set([...a.sources,v])]:a.sources.filter(x=>x!==v);persist();refreshCommit(stepById(t.dataset.step));}
+});
+document.addEventListener('input',e=>{
+  const t=e.target,f=t.dataset&&t.dataset.field;if(!f)return;
+  const st=stepById(t.dataset.step||'accueil'),a=A(st.id);
+  if(f==='justif'){a.justif=t.value;}
+  else if(f==='pseudo'){A('accueil').pseudo=t.value;}
+  else if(f==='syn'){a.fields=a.fields||{};a.fields[t.dataset.key]=t.value;const def=SYN_FIELDS.find(x=>x.k===t.dataset.key),n=wc(t.value);const c=$('#cf-'+t.dataset.key);if(c){c.textContent=`${n} mot${n>1?'s':''} sur ${def.min} au minimum`;c.className='count '+(n>=def.min?'ok':'');}}
+  persist();
+  if(f==='pseudo')refreshCommit(stepById('accueil'));else refreshCommit(st);
+});
+document.addEventListener('keydown',e=>{
+  const mod=e.ctrlKey||e.metaKey;const k=(e.key||'').toLowerCase();
+  if(mod&&!e.altKey&&k==='s'){e.preventDefault();exportJson();}
+  else if(mod&&!e.altKey&&k==='e'){e.preventDefault();exportPdf();}
+  else if(e.altKey&&e.code==='KeyN'){e.preventDefault();newProject();}
+  else if(e.altKey&&e.code==='KeyO'){e.preventDefault();$('#file').click();}
+});
+
+/* ----- démarrage ----- */
+(function init(){
+  const saved=load();if(saved){S=saved;S.meta=Object.assign({created:Date.now(),updated:Date.now(),lastJson:0,lastPdf:0,changes:0},S.meta||{});}
+  document.querySelectorAll('[data-mac]').forEach(el=>{el.textContent=IS_MAC?el.dataset.mac:el.dataset.pc;});
+  render();
+})();
+
+</script>
+</body>
+</html>
